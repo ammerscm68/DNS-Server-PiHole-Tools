@@ -34,4 +34,4 @@ be guided interactively through the installation steps - and more. <br>
 <br><img width="623" height="372" alt="PiHole-6" src="https://github.com/user-attachments/assets/7e8c80dd-b8a4-4be3-91c5-a9900ee174df" />
 <br>
 <br>
-# <strong>Protection against 43.010.259 "evil" websites (as of May 5, 2026)</strong>
+<h3><strong>Protection against 43.010.259 "evil" Websites (as of May 5, 2026)</strong></h3>
