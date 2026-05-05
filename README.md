@@ -10,7 +10,7 @@ webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Managemen
 autoupdate &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Automatic Updates with a CronJob) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
-replace the - .bashrc - file. <br>
+replace the - .bashrc - file in the user's home directory. <br>
 <br>
 The installation process will start the next time you login, and you will <br>
 be guided interactively through the installation steps - and more. <br>
