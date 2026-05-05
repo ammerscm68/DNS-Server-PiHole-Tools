@@ -2,6 +2,7 @@
 # installation of "Pi-Hole" (Raspberry Pi) <br>
 <br>
 **Individual commands:** <br>
+**New from Version 10.3.2**<br>
 <br>
 piholeinstall &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
 addblocklists &nbsp;&nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
