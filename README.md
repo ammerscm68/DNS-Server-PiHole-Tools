@@ -3,11 +3,11 @@
 <br>
 Individual commands: <br>
 <br>
-piholeinstall   (Intercative Installation of PiHole DNS-Server) <br>
-addblocklists   (Automatic add Blocklists for PiHole) <br>
-setstaticip     (set static IPv4-Adress) - recommended <br>
-webmininstall   (Automatic Install "Webmin" for Raspberry Pi Management) <br>
-autoupdate      (Automatic Updates with a CronJob) <br>
+piholeinstall &nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
+addblocklists &nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
+setstaticip &nbsp;&nbsp;(set static IPv4-Adress) - recommended <br>
+webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
+autoupdate &nbsp;&nbsp;(Automatic Updates with a CronJob) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file. <br>
