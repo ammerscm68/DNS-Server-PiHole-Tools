@@ -3,7 +3,7 @@
 <br>
 Individual commands: <br>
 <br>
-piholeinstall &nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
+piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
 addblocklists &nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 setstaticip &nbsp;&nbsp;(set static IPv4-Adress) - recommended <br>
 webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
