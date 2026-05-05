@@ -15,7 +15,7 @@ replace the - .bashrc - file. <br>
 The installation process will start the next time you log in, and you will <br>
 be guided interactively through the installation steps. <br>
 <br>
-Pi-hole then queries the following directly:
+<strong>Pi-hole then queries the following directly:<strong>
 <br>
 <br>
 <img width="626" height="377" alt="PiHole-1" src="https://github.com/user-attachments/assets/6423862f-daa7-4e8b-a176-b30b0ac7859a" />
