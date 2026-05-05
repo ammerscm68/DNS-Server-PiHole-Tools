@@ -18,3 +18,18 @@ be guided interactively through the installation steps - and more. <br>
 <strong>Pi-hole then queries the following directly:<strong>
 <br>
 <br>
+<img width="626" height="377" alt="PiHole-1" src="https://github.com/user-attachments/assets/128aa851-72ed-49a3-a046-cc0e0f013eb1" />
+<br>
+<br>
+<img width="631" height="385" alt="PiHole-1 5" src="https://github.com/user-attachments/assets/aab86d74-ddd8-4ce0-8ee5-dbd1e6be70b1" />
+<br>
+<br>
+<img width="623" height="372" alt="PiHole-2" src="https://github.com/user-attachments/assets/93847ba7-62ac-40c4-adbe-0d851a926a79" />
+<br>
+<br>
+<img width="623" height="374" alt="PiHole-3" src="https://github.com/user-attachments/assets/28837c7c-3a58-4c77-8df1-99c11aa22ed5" />
+<br>
+<br><img width="622" height="372" alt="PiHole-5" src="https://github.com/user-attachments/assets/6ab5d014-b4f4-4d83-a7c8-d31ff78cde1d" />
+<br>
+<br><img width="623" height="372" alt="PiHole-6" src="https://github.com/user-attachments/assets/7e8c80dd-b8a4-4be3-91c5-a9900ee174df" />
+<br>
