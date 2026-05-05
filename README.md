@@ -1,7 +1,7 @@
 # DNS-Server Tools for easy interactive <br>
 # installation of "Pi-Hole" (Raspberry Pi) <br>
 <br>
-Individual commands: <br>
+**Individual commands:** <br>
 <br>
 piholeinstall &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
 addblocklists &nbsp;&nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
