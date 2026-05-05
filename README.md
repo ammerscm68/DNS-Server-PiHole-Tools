@@ -15,7 +15,7 @@ replace the - .bashrc - file in the user's home directory. <br>
 The installation process will start the next time you login, and you will <br>
 be guided interactively through the installation steps - and more. <br>
 <br>
-<strong>Pi-hole then queries the following directly:<strong>
+<strong>Pi-hole then queries the following directly:</strong>
 <br>
 <br>
 <img width="626" height="377" alt="PiHole-1" src="https://github.com/user-attachments/assets/128aa851-72ed-49a3-a046-cc0e0f013eb1" />
@@ -33,3 +33,5 @@ be guided interactively through the installation steps - and more. <br>
 <br>
 <br><img width="623" height="372" alt="PiHole-6" src="https://github.com/user-attachments/assets/7e8c80dd-b8a4-4be3-91c5-a9900ee174df" />
 <br>
+<br>
+<strong>Protection against 43.010.259 "evil" websites (as of May 5, 2026)</strong>
