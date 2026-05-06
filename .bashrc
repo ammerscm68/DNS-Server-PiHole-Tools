@@ -182,7 +182,7 @@ fi
 #     DNS-Tools (Assistent)
 #
 #          Mai 2026
-# Version 1.3 von Mario Ammerschuber
+# Version 1.4 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
