@@ -9,9 +9,9 @@ setstaticip &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set static IPv4- an
 webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
 autoupdate &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Automatic Updates with a CronJob) <br>
 setcloudflareupstream &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare) <br>
-getipv4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
-getipv6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
-setfail2banjail &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
+getipv4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
+getipv6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
+setfail2banjail &nbsp;&nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
