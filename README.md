@@ -8,7 +8,7 @@ addblocklists &nbsp;&nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 setstaticip &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
 webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
 autoupdate &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Automatic Updates with a CronJob) <br>
-setcloudflareupstream &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare) <br>
+setcloudflareupstream &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare - ipv4 and ipv6) <br>
 getipv4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
 getipv6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
 setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
