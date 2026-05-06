@@ -28,7 +28,7 @@ be guided interactively through the installation steps - and more. <br>
 <img width="631" height="385" alt="PiHole-1 5" src="https://github.com/user-attachments/assets/aab86d74-ddd8-4ce0-8ee5-dbd1e6be70b1" />
 <br>
 <br>
-<img width="623" height="372" alt="PiHole-2" src="https://github.com/user-attachments/assets/93847ba7-62ac-40c4-adbe-0d851a926a79" />
+<img width="623" height="376" alt="PiHole-2" src="https://github.com/user-attachments/assets/2bc84d13-410d-4c40-8835-2b5e6244d68b" />
 <br>
 <br>
 <img width="623" height="374" alt="PiHole-3" src="https://github.com/user-attachments/assets/28837c7c-3a58-4c77-8df1-99c11aa22ed5" />
