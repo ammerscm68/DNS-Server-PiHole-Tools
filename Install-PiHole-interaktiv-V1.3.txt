@@ -163,20 +163,26 @@ piholeinstall() {
      sudo ip6tables -A INPUT -p tcp --dport 80 -j ACCEPT
      sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
      sudo ip6tables -A INPUT -p tcp --dport 8080 -j ACCEPT
+     sudo iptables -A INPUT -p tcp --dport 10000 -j ACCEPT
+     sudo ip6tables -A INPUT -p tcp --dport 10000 -j ACCEPT
 
      # 2. DANACH: Den restlichen "Müll" blockieren
      sudo iptables -A INPUT -p tcp --destination-port 80 -j REJECT --reject-with tcp-reset
      sudo iptables -A INPUT -p tcp --destination-port 8080 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p tcp --destination-port 10000 -j REJECT --reject-with tcp-reset
      sudo iptables -A INPUT -p tcp --destination-port 443 -j REJECT --reject-with tcp-reset
      sudo iptables -A INPUT -p udp --destination-port 80 -j REJECT --reject-with icmp-port-unreachable
      sudo iptables -A INPUT -p udp --destination-port 8080 -j REJECT --reject-with icmp-port-unreachable
+     sudo iptables -A INPUT -p udp --destination-port 10000 -j REJECT --reject-with icmp-port-unreachable
      sudo iptables -A INPUT -p udp --destination-port 443 -j REJECT --reject-with icmp-port-unreachable
 
      sudo ip6tables -A INPUT -p tcp --destination-port 80 -j REJECT --reject-with tcp-reset
      sudo ip6tables -A INPUT -p tcp --destination-port 8080 -j REJECT --reject-with tcp-reset
+     sudo ip6tables -A INPUT -p tcp --destination-port 10000 -j REJECT --reject-with tcp-reset
      sudo ip6tables -A INPUT -p tcp --destination-port 443 -j REJECT --reject-with tcp-reset
      sudo ip6tables -A INPUT -p udp --destination-port 80 -j REJECT --reject-with icmp6-port-unreachable
      sudo ip6tables -A INPUT -p udp --destination-port 8080 -j REJECT --reject-with icmp6-port-unreachable
+     sudo ip6tables -A INPUT -p udp --destination-port 10000 -j REJECT --reject-with icmp6-port-unreachable
      sudo ip6tables -A INPUT -p udp --destination-port 443 -j REJECT --reject-with icmp6-port-unreachable
      # Regeln dauerhaft speichern (da du iptables-persistent installierst)
      echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
@@ -547,6 +553,7 @@ setstaticip() {
 
     # 3. Umstellung anbieten
     printf "\n🌐 Aktueller Status für [%s]: DHCP (Dynamische IP-Adresse)\n\n" "$interface"
+    printf "\n\n"
     read -r -p "❓ Möchten Sie jetzt auf eine STATISCHE IPv4-Adresse umstellen? (ja/nein/nie): " sip_antwort
 
     if [[ "$sip_antwort" == "ja" ]]; then
