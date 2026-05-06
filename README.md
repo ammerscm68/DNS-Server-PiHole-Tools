@@ -1,5 +1,5 @@
 # DNS-Server Tools for easy interactive <br>
-# installation of "Pi-Hole" (Raspberry Pi) <br>
+# installation of "Pi-Hole" and more (Raspberry Pi) <br>
 <br>
 <strong>Individual commands:</strong>
 <br>
