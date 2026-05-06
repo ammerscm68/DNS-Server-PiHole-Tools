@@ -115,7 +115,6 @@ alias pihole-deletewhitelist='sudo sqlite3 /etc/pihole/gravity.db "delete from d
 alias pihole-stop='clear && echo && echo ***disable pihole dns-server*** && echo && sudo pihole disable && echo'
 alias pihole-start='clear && echo ***enable pihole dns-server*** && echo && sudo pihole enable && echo'
 alias ipconfig='sudo ifconfig'
-alias getipv6='ip a ls |grep inet6'
 alias speicher='df -h'
 alias usbpower='echo max_usb_current = 1 | sudo tee -a /boot/config.txt'
 alias btdisable='echo dtoverlay=pi3-disable-bt | sudo tee -a /boot/config.txt && sudo systemctl disable hciuart'
@@ -132,7 +131,6 @@ alias ddns-check='sudo ddclient -force'
 alias timesync='ntpdate -s 0.de.pool.ntp.org'
 alias timesync-check='timedatectl'
 alias osversion='lsb_release -dr'
-alias ipv6='ip a ls | grep fd'
 alias networkmanager='sudo nmtui'
 alias log='journalctl -f'
 alias portscan='clear && echo && echo ***PortScan*** Please wait ... && sudo nmap -p- 192.168.178.210 -sU -sN && echo && echo done'
@@ -184,7 +182,7 @@ fi
 #     DNS-Tools (Assistent)
 #
 #          Mai 2026
-# Version 1.2 von Mario Ammerschuber
+# Version 1.3 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
@@ -289,16 +287,21 @@ piholeinstall() {
     # Methode über die CONNECTION abfragen
     local method
     method=$(nmcli -g ipv4.method connection show "$conn_name")
+    method="${method,,}"
     if [[ "$method" != "manual" ]]; then
       printf "\n⚠️  Hinweis: Der Raspberry PI sollte eine ***feste*** IP-Adresse haben.\n\n"
     fi
     # -------------------------------------------------------------------------------------------------
-    read -p "❓ Jetzt mit der Installation beginnen? (ja/nein): " confirm
+    read -p "❓ Jetzt mit der Installation von Pi-Hole beginnen? (ja/nein): " confirm
     if [[ "$confirm" == "ja" ]]; then
-        printf "\n🚀 Starte Download und Installation...\n\n\n"
+        clear # Bildschirm leeren
+        printf "\n🚀 Starte Systemaktualisierung - Bitte warten...\n\n\n"
         sudo dpkg --configure -a && sudo apt update && sudo apt --assume-yes upgrade && sudo apt --assume-yes dist-upgrade &&  sudo apt --assume-yes autoremove && sudo apt autoclean
-        sleep 5
-        # Der offizielle Curl-Befehl
+        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" curl # curl installieren wenn noch nicht vorhanden
+        clear # Bildschirm leeren
+        printf "\n\n🚀 Starte Pi-Hole Download und Installation - Bitte warten...\n\n\n"
+        sleep 3
+        # Der offizielle curl-Befehl
         curl -sSL https://install.pi-hole.net | sudo bash
         printf "\n\n"
         # Zusätzliche Installationen (Achtung:  Nur für DEBIAN-Linux !!!)
@@ -309,10 +312,22 @@ piholeinstall() {
 
      # Check: Wurde Pi-Hole installiert ?
      if command -v pihole >/dev/null 2>&1; then
-     printf "\n\n✅ Der DNS-Server (Pi-Hole) wurde erfolgreich installiert...\n\n"
-     # Wir holen die IP-Adresse
-     PI_IP=$(hostname -I | awk '{print $1}')
-     printf "\nℹ️ Hinweis: Die IP-Adresse '%s' muß jetzt noch als DSN-Server im Router eingetragen werden .\n\n" "$PI_IP"
+     printf "\n\n✅ Der DNS-Server (Pi-Hole) wurde erfolgreich installiert...\n\n\n"
+     printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
+     read -n 1 -s -r
+     clear # Bildschirm leeren
+     # Zur Sicherheit Cloudflare Upstream hinzufügen 
+     setcloudflareupstream
+     # Wir holen die IPv4-Adresse
+     local IPv4
+     IPv4=$(hostname -I | awk '{print $1}')
+     printf "\nℹ️ Hinweis: Die IPv4-Adresse '%s' muß jetzt noch als DSN-Server im Router eingetragen werden .\n\n" "$IPv4"
+     if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
+     # Adresse auslesen
+     local IPv6
+     IPv6=$(ip -6 addr show | grep "scope global" | awk '{print $2}' | cut -d/ -f1 | head -n 1)
+     printf "\nℹ️ Hinweis: Die IPv6-Adresse '%s' muß jetzt noch als DSN-Server im Router eingetragen werden .\n\n" "$IPv6"
+     fi
      printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
      clear # Bildschirm leeren
@@ -323,29 +338,44 @@ piholeinstall() {
      if command -v iptables >/dev/null 2>&1; then
      clear # Bildschirm leeren
      printf "\n\n🚀 *** Tuning des Pi-Hole DNS-Server ... ***\n"
+     # 1. ZUERST: Den Zugriff auf das Web-Interface für Dich selbst erlauben (WICHTIG!)
+     sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+     sudo ip6tables -A INPUT -p tcp --dport 80 -j ACCEPT
+     sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+     sudo ip6tables -A INPUT -p tcp --dport 8080 -j ACCEPT
+
+     # 2. DANACH: Den restlichen "Müll" blockieren
      sudo iptables -A INPUT -p tcp --destination-port 80 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p tcp --destination-port 8080 -j REJECT --reject-with tcp-reset
      sudo iptables -A INPUT -p tcp --destination-port 443 -j REJECT --reject-with tcp-reset
      sudo iptables -A INPUT -p udp --destination-port 80 -j REJECT --reject-with icmp-port-unreachable
+     sudo iptables -A INPUT -p udp --destination-port 8080 -j REJECT --reject-with icmp-port-unreachable
      sudo iptables -A INPUT -p udp --destination-port 443 -j REJECT --reject-with icmp-port-unreachable
 
      sudo ip6tables -A INPUT -p tcp --destination-port 80 -j REJECT --reject-with tcp-reset
+     sudo ip6tables -A INPUT -p tcp --destination-port 8080 -j REJECT --reject-with tcp-reset
      sudo ip6tables -A INPUT -p tcp --destination-port 443 -j REJECT --reject-with tcp-reset
      sudo ip6tables -A INPUT -p udp --destination-port 80 -j REJECT --reject-with icmp6-port-unreachable
+     sudo ip6tables -A INPUT -p udp --destination-port 8080 -j REJECT --reject-with icmp6-port-unreachable
      sudo ip6tables -A INPUT -p udp --destination-port 443 -j REJECT --reject-with icmp6-port-unreachable
+     # Regeln dauerhaft speichern (da du iptables-persistent installierst)
+     echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
+     echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
+     sudo netfilter-persistent save
      printf "\n🎉 *** Tuning abgeschlossen ***\n\n"
      printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
      fi
      clear # Bildschirm leeren
      echo "" | sudo pihole setpassword ""  # Setzt ein leeres Passwort, was die Abfrage deaktiviert
-     PI_IP=$(hostname -I | awk '{print $1}')
      printf "\n"
      printf "#########################################################\n"
      printf "🎉 Pi-Hole Installation komplett abgeschlossen!\n"
      printf "🌐 Grafische Oberfläche aufrufen:\n"
-     printf "👉 http://%s/admin\n" "$PI_IP"
+     printf "👉 http://%s/admin\n" "$IPv4"
      printf "=========================================================\n"
      printf "🔐 Passwort: DEAKTIVIERT (kein Login nötig)\n"
+     printf "=========================================================\n"
      printf "#########################################################\n"
      printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
@@ -353,17 +383,20 @@ piholeinstall() {
      # Fragen ob "Webmin" installiert werden soll wenn noch nicht installiert
      webmininstall install
      clear # Bildschirm leeren
+     # Fail2Ban aktivieren
+     setfail2banjail
      printf "\n\n\n"
      read -r -p "❓ Soll ein automatisches System-Update eingerichtet werden ? (ja/nein): " au_antwort
      printf "\n"
      if [ "$au_antwort" = "ja" ]; then
+     # Auto-Update erstellen
      autoupdate -c
+     fi
      printf "\n🚀 Es erfolgt ein abschließender Neustart des Systems.\n\n"
      printf "\n🔄 Der Neustart erfolgt in 15 Sekunden (Abbruch mit Strg+C)...\n\n"
      sleep 15
      sudo reboot
      return 1
-     fi
       else
        printf "\n❌ Fehler: Der DNS-Server (Pi-Hole) konnte nicht installiert werden !\n\n"
        return 1
@@ -374,12 +407,45 @@ piholeinstall() {
     fi
 }
 
+setcloudflareupstream() {
+# Check: Wurde Pi-Hole installiert ?
+if command -v pihole >/dev/null 2>&1; then
+local dns_servers
+# --- IPv4 & IPv6 UPSTREAM AKTIVIEREN (Cloudflare) ---
+if ip -6 addr show | grep -q "scope global"; then
+    printf "\n🧬 IPv4 & IPv6 erkannt. Aktiviere Cloudflare Upstream DNS...\n\n"
+    
+    # Cloudflare IPv4 & IPv6 Adressen im Pi-hole v6 JSON-Format
+    dns_servers="[ \"1.1.1.1\", \"1.0.0.1\", \"2606:4700:4700::1111\", \"2606:4700:4700::1001\" ]"
+    
+    # In Pi-hole v6 die Konfiguration setzen
+    sudo pihole-FTL --config dns.upstreams "$dns_servers" > /dev/null 2>&1
+    
+    # Dienst neu starten, um Änderungen zu übernehmen
+    sudo systemctl restart pihole-FTL
+    printf "\n✅ Cloudflare IPv4 und IPv6 Upstream-Server wurden hinzugefügt.\n\n"
+else
+   # --- IPv4 UPSTREAM AKTIVIEREN (Cloudflare) ---
+   printf "\n🧬 Nur IPv4 erkannt. Aktiviere Cloudflare Upstream DNS...\n\n"
+    
+    # Cloudflare IPv4 im Pi-hole v6 JSON-Format
+    dns_servers="[ \"1.1.1.1\", \"1.0.0.1\" ]"
+    
+    # In Pi-hole v6 die Konfiguration setzen
+    sudo pihole-FTL --config dns.upstreams "$dns_servers" > /dev/null 2>&1
+    
+    # Dienst neu starten, um Änderungen zu übernehmen
+    sudo systemctl restart pihole-FTL
+    printf "\n✅ Cloudflare IPv4 Upstream-Server wurden hinzugefügt.\n\n"
+    fi
+     else
+     printf "\n⚠️ Pi-hole ist nicht installiert. Upstream-Konfiguration wird übersprungen.\n\n"
+fi
+}
+
 addblocklists() {
     # Prüfen ob "sudo" installiert ist
     checksudo || return 1
-
-    # Betriebssystem Version prüfen
-    checkosversion || return 1
 
     # Hier Blocklisten eintragen
     local blocklists=(
@@ -552,7 +618,7 @@ addblocklists() {
 	"https://raw.githubusercontent.com/RPiList/specials/master/Blocklisten/DomainSquatting/INT/interactivebrokers"
 	"https://raw.githubusercontent.com/RPiList/specials/master/Blocklisten/DomainSquatting/INT/traderepublic"
     )
-    printf "🚀 Starte automatischen Import von weiteren %s Blocklisten...\n\n" "${#blocklists[@]}"
+    printf "🚀 Starte automatischen Import von weiteren %s Blocklisten - Bitte etwas Geduld...\n\n" "${#blocklists[@]}"
     printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
     read -n 1 -s -r
 
@@ -568,12 +634,32 @@ addblocklists() {
     printf "\n\n\n✅ Fertig! Alle Listen sind aktiv. Der DNS-Server ist bereit.\n\n"
 }
 
+getipv4() {
+ # Wir holen die IP-Adresse
+ local IPv4
+ IPv4=$(hostname -I | awk '{print $1}')
+ if [[ -n "$IPv4" ]]; then
+ printf "\nℹ️ Die IPv4-Adresse lautet: '%s'\n\n" "$IPv4"
+ else
+ printf "\n⚠️ Keine IPv4-Adresse gefunden!\n\n"
+ fi  
+}
+
+getipv6() {
+# Adresse auslesen
+if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
+local IPv6
+IPv6=$(ip -6 addr show | grep "scope global" | awk '{print $2}' | cut -d/ -f1 | head -n 1)
+printf "\nℹ️ Die IPv6-Adresse lautet: '%s'\n\n" "$IPv6"
+else
+printf "\nℹ️ Die IPv6-Adresse lautet: keine\n"
+printf "\n🌐 Die Verwendung einer IPv6-Adresse ist wahrscheinlich im Router deaktiviert.\n\n"
+fi
+}
+
 setstaticip() {
     # Prüfen ob "sudo" installiert ist
     checksudo || return 1
-
-    # Betriebssystem Version prüfen
-    checkosversion || return 1
 
     # Wenn der Networkmanager nicht installiert ist dann noch installieren
     if ! command -v nmcli >/dev/null 2>&1; then
@@ -616,6 +702,7 @@ setstaticip() {
     # 3. Methode über die CONNECTION abfragen
     local method
     method=$(nmcli -g ipv4.method connection show "$conn_name")
+    method="${method,,}"
 
     # 4. Wir holen die IP auch über die CONNECTION
     local current_ip=$(nmcli -g ip4.address connection show "$conn_name" | cut -d/ -f1)
@@ -640,7 +727,7 @@ setstaticip() {
 
     # 3. Umstellung anbieten
     printf "\n🌐 Aktueller Status für [%s]: DHCP (Dynamische IP-Adresse)\n\n" "$interface"
-    read -r -p "❓ Möchten Sie jetzt auf eine STATISCHE IP-Adresse umstellen? (ja/nein/nie): " sip_antwort
+    read -r -p "❓ Möchten Sie jetzt auf eine STATISCHE IPv4-Adresse umstellen? (ja/nein/nie): " sip_antwort
 
     if [[ "$sip_antwort" == "ja" ]]; then
         clear # Bildschirm leeren
@@ -707,11 +794,27 @@ setstaticip() {
             ipv4.addresses "${new_ip}/24" \
             ipv4.gateway "$new_gw" \
             ipv4.dns "${new_ip} 1.1.1.1" \
-            ipv4.method manual
+            ipv4.method manual \
+            ipv6.method "auto" \
+            ipv6.addr-gen-mode "eui64" \
+            ipv6.ip6-privacy 0
 
         rm -f "$skip_file" 2>/dev/null
-        printf "\n✅ Statische IP-Adresse erfolgreich konfiguriert.\n\n"
-        printf "\n🚀 Neustart in 15 Sekunden, um auf die neue IP-Adresse umzustellen - Bitte warten...\n\n"
+        printf "\n✅ Die statische IPv4-Adresse wurde erfolgreich konfiguriert: %s\n" "$new_ip"
+        # ----------------------- IPv6 ----------------------------------------------
+        # Prüfen, ob die Einstellungen im NetworkManager-Profil angekommen sind
+        local check_v6_method=$(nmcli -g ipv6.method connection show "$conn_name")
+        local check_v6_privacy=$(nmcli -g ipv6.ip6-privacy connection show "$conn_name")
+        if [[ "$check_v6_method" == "auto" && "$check_v6_privacy" == "0" ]]; then
+        printf "\n✅ IPv6-Konfiguration (EUI-64) wurde erfolgreich hinterlegt.\n\n"
+        else
+        printf "\n⚠️ Warnung: IPv6-Einstellungen konnten nicht verifiziert werden.\n"
+        printf "\n🌐 IPv6 ist wahrscheinlich nicht auf Ihrem Router aktiviert.\n\n"
+        fi
+        # ----------------------- IPv6 ----------------------------------------------
+        printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
+        read -n 1 -s -r
+        printf "\n\n🚀 Neustart in 15 Sekunden, um auf die neuen IP-Adressen umzustellen - Bitte warten...\n\n"
         sleep 15
         sudo reboot
         exit 0
@@ -719,8 +822,16 @@ setstaticip() {
     elif [[ "$sip_antwort" == "nie" ]]; then
         printf "DNS-Server - Benutzer hat sich am $(date +'%d.%m.%Y um %H:%M') für eine DHCP-Adresse entschieden!" > "$skip_file"
         printf "\n✅ Die IP-Adresse des DNS-Server bleibt auf DHCP Konfiguration. (Aktuell: %s)\n\n" "$current_ip"
+        sudo nmcli connection modify "$conn_name" \
+        ipv6.method "auto" \
+        ipv6.addr-gen-mode "eui64" \
+        ipv6.ip6-privacy 0
     else
         printf "\n🔄 Abbruch. Die IP-Adresse bleibt vorerst auf DHCP. (Aktuell: %s)\n\n" "$current_ip"
+        sudo nmcli connection modify "$conn_name" \
+        ipv6.method "auto" \
+        ipv6.addr-gen-mode "eui64" \
+        ipv6.ip6-privacy 0
     fi
 }
 
@@ -754,6 +865,7 @@ webmininstall() {
         # Extrahiert nur die Version sauber
         local version=$(echo "$check_result" | awk '{print $3}')
         printf "   -> Version: $version\n\n"
+        printf "\n✅ Zugriff über: https://%s:10000\n\n" "$(hostname -I | awk '{print $1}')"
         printf "\b \b"
         printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
         read -n 1 -s -r
@@ -763,22 +875,16 @@ webmininstall() {
         printf "\b \b" 
     fi
 
-    # Betriebssystem Version noch einmal prüfen
-    checkosversion || return 1
-    printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
-    read -n 1 -s -r
-
-    clear # Bildschirm leeren
     printf "\n\n"
     read -r -p "❓ Möchten Sie die grafische Oberfläche 'Webmin' jetzt installieren? (ja/nein): " wmconfirm
     if [[ "$wmconfirm" == "ja" ]]; then
         printf "\n\n"
-        printf "\n🚀 Starte Webmin-Installation - Bitte warten...\n\n"
-
+        printf "\n🚀 Starte Systemupdate - Bitte warten...\n\n"
         # Abhängigkeiten installieren (curl wird für das Skript benötigt)
         sudo dpkg --configure -a && sudo apt update && sudo apt --assume-yes upgrade && sudo apt --assume-yes dist-upgrade &&  sudo apt --assume-yes autoremove && sudo apt autoclean
         sudo apt-get install -y curl gnupg2 apt-transport-https
 
+        printf "\n\n🚀 Starte Webmin-Installation - Bitte warten...\n\n"
         # Offizielles Webmin Repository-Setup-Skript laden und ausführen
         # Dies fügt automatisch den Key und die Sources hinzu
         curl -o setup-repos.sh https://raw.githubusercontent.com/webmin/webmin/master/setup-repos.sh
@@ -812,6 +918,8 @@ webmininstall() {
         fi
     else
         printf "\n⏩ Die grafische Oberfläche 'Webmin' wird ***nicht*** installiert.\n\n"
+        printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
+        read -n 1 -s -r
     fi
 }
 
@@ -936,6 +1044,8 @@ local_lang_de() {
     fi
 
     if [[ $kbd_check -eq 0 || $lang_check -eq 0 ]]; then
+        # Betriebssystem Version prüfen
+        checkosversion || return 1
         export LC_ALL=C.UTF-8
         export LANG=C.UTF-8
         export LANGUAGE=C.UTF-8
@@ -979,6 +1089,84 @@ EOF
     else
         printf "\nℹ️ Systemsprache und Tastatur sind bereits auf Deutsch eingestellt.\n"
         return 0
+    fi
+}
+
+setfail2banjail() {
+    printf "\n🛡️  Konfiguriere Fail2Ban Schutz (SSH, Webmin & IPv6)...\n\n"
+    
+    # Aktuelle IP für die Whitelist ermitteln
+    local my_ip
+    my_ip=$(hostname -I | awk '{print $1}')
+    
+    # 1. Datei: /etc/fail2ban/fail2ban.local (IPv6-Unterstützung)
+    local f2b_conf="/etc/fail2ban/fail2ban.local"
+    local ipv6_entry="allowipv6 = auto"
+
+    if [ -f "$f2b_conf" ] && grep -qF "$ipv6_entry" "$f2b_conf"; then
+        printf "\nℹ️  IPv6-Einstellung ist bereits in fail2ban.local vorhanden.\n\n"
+    else
+        printf "\n➕ Konfiguriere IPv6-Unterstützung...\n\n"
+        if [ ! -f "$f2b_conf" ]; then
+            echo "[DEFAULT]" | sudo tee "$f2b_conf" > /dev/null
+        fi
+        echo "$ipv6_entry" | sudo tee -a "$f2b_conf" > /dev/null
+    fi
+
+    # 2. Datei: /etc/fail2ban/jail.local (SSH & Allgemein)
+    printf "\n➕ Erstelle jail.local (SSH-Schutz)...\n\n"
+    sudo cat <<EOF | sudo tee /etc/fail2ban/jail.local > /dev/null
+##### SSH Server Fail2Ban #####
+
+[sshd]
+enabled = true
+port = ssh
+filter = sshd
+logpath = /var/log/auth.log
+maxretry = 5
+bantime = 86400
+ignoreip = whitelist-IP
+backend = systemd
+
+[apache-auth]
+enabled = false
+filter  = apache-auth
+bantime = 86400
+maxretry = 5
+ignoreip = whitelist-IP
+
+[lighttpd-custom]
+enabled = false
+filter = lighttpd-custom
+port = http,https
+logpath = /var/log/lighttpd/error.log
+bantime = 86400
+maxretry = 2
+ignoreip = whitelist-IP
+EOF
+
+    # 3. Datei: /etc/fail2ban/jail.d/webmin.conf (Webmin Schutz)
+    printf "\n➕ Erstelle webmin.conf (Port 10000)...\n\n"
+    sudo cat <<EOF | sudo tee /etc/fail2ban/jail.d/webmin.conf > /dev/null
+[webmin-auth]
+enabled = true
+port    = 10000
+filter  = webmin-auth
+logpath = /var/log/auth.log
+maxretry = 5
+bantime = 86400
+ignoreip = whitelist-IP
+backend = systemd
+EOF
+
+    # Neustart und Status
+    printf "\n🔄 Starte Fail2Ban Dienst neu...\n\n"
+    sudo systemctl restart fail2ban
+    
+    if systemctl is-active --quiet fail2ban; then
+        printf "\n✅ Fail2Ban erfolgreich konfiguriert und aktiv.\n\n"
+    else
+        printf "\n❌ Fehler: Fail2Ban konnte nicht gestartet werden. Bitte Logs prüfen.\n\n"
     fi
 }
 
