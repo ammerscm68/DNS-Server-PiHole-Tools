@@ -182,7 +182,7 @@ fi
 #     DNS-Tools (Assistent)
 #
 #          Mai 2026
-# Version 1.4 von Mario Ammerschuber
+# Version 1.5 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
@@ -214,7 +214,7 @@ checkosversion() {
         return 0
     else
         printf "\n❌ Fehler: Diese Funktionssammlung benötigt mindestens Version 12 (Bookworm) des Betriebssystems.\n\n"
-        printf "\n⚠️ Deine aktuelle Version ist: %s\n\n" "$os_ver"
+        printf "\n⚠️ Die aktuelle Version ist: %s\n\n" "$os_ver"
         printf "\n🚫 Leider müssen wir an dieser Stelle abbrechen.\n\n"
         return 1
     fi
@@ -229,7 +229,7 @@ checkpartitionsize() {
           sudo reboot
           return 1
       fi
-      # ------------------------------------------------------------------------------------------
+
     printf "\n📊 Prüfe verfügbaren Speicherplatz...\n\n"
     # Liest die Größe von / in Kilobytes aus
     local root_size_kb=$(df / --output=size | tail -1)
@@ -238,7 +238,7 @@ checkpartitionsize() {
 
     if [ "$root_size_gb" -lt 16 ]; then
         printf "\n⚠️ ACHTUNG: Die Partition ist nur %s GB groß.\n\n" "$root_size_gb"
-        printf "\n❌ Pi-hole benötigt ein Speichermedium mit mindestens 16 GB für einen reibungslosen Betrieb.\n"
+        printf "\n❌ Pi-Hole benötigt ein Speichermedium mit mindestens 16 GB für einen reibungslosen Betrieb.\n"
         printf "\n🛑 Vorgang wird abgebrochen !\n\n"
         return 1
     else
@@ -250,6 +250,8 @@ checkpartitionsize() {
 piholeinstall() {
     # Prüfen ob "sudo" installiert ist
     checksudo || return 1
+
+    storagestatus -phc # Pi-Hole Speicherstatus anzeigen wenn installiert
 
     # Vorab-Check: Ist Pi-Hole vielleicht schon installiert ?
     if command -v pihole >/dev/null 2>&1; then
@@ -270,7 +272,7 @@ piholeinstall() {
     printf "🏠 Pi-Hole Installations-Assistent\n"
     printf "==================================\n\n"
     printf "\nℹ️  Das offizielle Installations-Skript wird geladen...\n\n"
-    #---------------------------------------------------------------------------------------------------
+
     # Aktives Interface ermitteln (Sprachneutral)
     local interface
     interface=$(nmcli -t -f DEVICE,STATE device status | grep -E ":connected|:verbunden" | head -n 1 | cut -d: -f1)
@@ -291,7 +293,8 @@ piholeinstall() {
     if [[ "$method" != "manual" ]]; then
       printf "\n⚠️  Hinweis: Der Raspberry PI sollte eine ***feste*** IP-Adresse haben.\n\n"
     fi
-    # -------------------------------------------------------------------------------------------------
+    # ************************** Begin Installation von PiHole **************************
+    printf "\n\n"
     read -p "❓ Jetzt mit der Installation von Pi-Hole beginnen? (ja/nein): " confirm
     if [[ "$confirm" == "ja" ]]; then
         clear # Bildschirm leeren
@@ -315,9 +318,8 @@ piholeinstall() {
      printf "\n\n✅ Der DNS-Server (Pi-Hole) wurde erfolgreich installiert...\n\n\n"
      printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
-     clear # Bildschirm leeren
-     # Zur Sicherheit Cloudflare Upstream hinzufügen 
-     setcloudflareupstream
+     # DNS Upstream Server hinzufügen 
+     upstreamdns
      # Wir holen die IPv4-Adresse
      local IPv4
      IPv4=$(hostname -I | awk '{print $1}')
@@ -332,12 +334,15 @@ piholeinstall() {
      read -n 1 -s -r
      clear # Bildschirm leeren
      printf "\n\n\n"
+     addwhitedomains # Zugelassene Domains in die Datenbank einfügen
      addblocklists # ***** Blocklisten hinzufügen *******
      printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
      if command -v iptables >/dev/null 2>&1; then
      clear # Bildschirm leeren
      printf "\n\n🚀 *** Tuning des Pi-Hole DNS-Server ... ***\n"
+     if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
+     # ******** IPv4 & IPv6 ***********
      # 1. ZUERST: Den Zugriff auf das Web-Interface für Dich selbst erlauben (WICHTIG!)
      sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
      sudo ip6tables -A INPUT -p tcp --dport 80 -j ACCEPT
@@ -367,7 +372,25 @@ piholeinstall() {
      # Regeln dauerhaft speichern (da du iptables-persistent installierst)
      echo iptables-persistent iptables-persistent/autosave_v4 boolean true | sudo debconf-set-selections
      echo iptables-persistent iptables-persistent/autosave_v6 boolean true | sudo debconf-set-selections
-     sudo netfilter-persistent save
+     else
+     # ******** Nur IPv4 ***********
+     # 1. ZUERST: Den Zugriff auf das Web-Interface für Dich selbst erlauben (WICHTIG!)
+     sudo iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+     sudo iptables -A INPUT -p tcp --dport 8080 -j ACCEPT
+     sudo iptables -A INPUT -p tcp --dport 10000 -j ACCEPT
+
+     # 2. DANACH: Den restlichen "Müll" blockieren
+     sudo iptables -A INPUT -p tcp --destination-port 80 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p tcp --destination-port 8080 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p tcp --destination-port 10000 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p tcp --destination-port 443 -j REJECT --reject-with tcp-reset
+     sudo iptables -A INPUT -p udp --destination-port 80 -j REJECT --reject-with icmp-port-unreachable
+     sudo iptables -A INPUT -p udp --destination-port 8080 -j REJECT --reject-with icmp-port-unreachable
+     sudo iptables -A INPUT -p udp --destination-port 10000 -j REJECT --reject-with icmp-port-unreachable
+     sudo iptables -A INPUT -p udp --destination-port 443 -j REJECT --reject-with icmp-port-unreachable
+     fi
+     # IPTables speichern
+     sudo netfilter-persistent save > /dev/null 2>&1
      printf "\n🎉 *** Tuning abgeschlossen ***\n\n"
      printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
@@ -377,7 +400,7 @@ piholeinstall() {
      printf "\n"
      printf "#########################################################\n"
      printf "🎉 Pi-Hole Installation komplett abgeschlossen!\n"
-     printf "🌐 Grafische Oberfläche aufrufen:\n"
+     printf "🌐 Grafische Oberfläche aufrufen mit:\n"
      printf "👉 http://%s/admin\n" "$IPv4"
      printf "=========================================================\n"
      printf "🔐 Passwort: DEAKTIVIERT (kein Login nötig)\n"
@@ -387,7 +410,7 @@ piholeinstall() {
      read -n 1 -s -r
      clear # Bildschirm leeren
      # Fragen ob "Webmin" installiert werden soll wenn noch nicht installiert
-     webmininstall install
+     webmininstall -install
      clear # Bildschirm leeren
      # Fail2Ban aktivieren
      setfail2banjail
@@ -395,12 +418,11 @@ piholeinstall() {
      read -r -p "❓ Soll ein automatisches System-Update eingerichtet werden ? (ja/nein): " au_antwort
      printf "\n"
      if [ "$au_antwort" = "ja" ]; then
-     # Auto-Update erstellen
      autoupdate -c
      fi
      printf "\n🚀 Es erfolgt ein abschließender Neustart des Systems.\n\n"
-     printf "\n🔄 Der Neustart erfolgt in 15 Sekunden (Abbruch mit Strg+C)...\n\n"
-     sleep 15
+     printf "\n🔄 Der Neustart erfolgt in 5 Sekunden (Abbruch mit Strg+C)...\n\n"
+     sleep 5
      sudo reboot
      return 1
       else
@@ -413,46 +435,131 @@ piholeinstall() {
     fi
 }
 
-setcloudflareupstream() {
-# Check: Wurde Pi-Hole installiert ?
-if command -v pihole >/dev/null 2>&1; then
-local dns_servers
-# --- IPv4 & IPv6 UPSTREAM AKTIVIEREN (Cloudflare) ---
-if ip -6 addr show | grep -q "scope global"; then
-    printf "\n🧬 IPv4 & IPv6 erkannt. Aktiviere Cloudflare Upstream DNS...\n\n"
-    
-    # Cloudflare IPv4 & IPv6 Adressen im Pi-hole v6 JSON-Format
-    dns_servers="[ \"1.1.1.1\", \"1.0.0.1\", \"2606:4700:4700::1111\", \"2606:4700:4700::1001\" ]"
-    
-    # In Pi-hole v6 die Konfiguration setzen
-    sudo pihole-FTL --config dns.upstreams "$dns_servers" > /dev/null 2>&1
-    
-    # Dienst neu starten, um Änderungen zu übernehmen
-    sudo systemctl restart pihole-FTL
-    printf "\n✅ Cloudflare IPv4 und IPv6 Upstream-Server wurden hinzugefügt.\n\n"
-else
-   # --- IPv4 UPSTREAM AKTIVIEREN (Cloudflare) ---
-   printf "\n🧬 Nur IPv4 erkannt. Aktiviere Cloudflare Upstream DNS...\n\n"
-    
-    # Cloudflare IPv4 im Pi-hole v6 JSON-Format
-    dns_servers="[ \"1.1.1.1\", \"1.0.0.1\" ]"
-    
-    # In Pi-hole v6 die Konfiguration setzen
-    sudo pihole-FTL --config dns.upstreams "$dns_servers" > /dev/null 2>&1
-    
-    # Dienst neu starten, um Änderungen zu übernehmen
-    sudo systemctl restart pihole-FTL
-    printf "\n✅ Cloudflare IPv4 Upstream-Server wurden hinzugefügt.\n\n"
+upstreamdns() {
+    if command -v pihole >/dev/null 2>&1; then
+        local dns_list
+        local choice
+
+        while true; do
+            clear
+            printf "\n"
+            printf "========================================\n"
+            printf "🌐 Auswahl der Upstream DNS-Server\n"
+            printf "========================================\n"
+            printf "1) Cloudflare (Empfohlen)\n"
+            printf "2) OpenDNS\n"
+            printf "3) Google\n"
+            printf "4) ALLE (Cloudflare, OpenDNS, Google)\n"
+            printf -- "----------------------------------------\n\n"
+            read -p "👉 Bitte wählen (1-4): " choice
+
+            if [[ "$choice" =~ ^[1-4]$ ]]; then
+                break 
+            else
+                printf "\n❌ Ungültige Eingabe! Bitte wählen Sie eine Zahl von 1 bis 4.\n"
+                sleep 3
+            fi
+        done
+
+        # Lokale Variablen für alle Varianten deklarieren
+        local cf_v4="\"1.1.1.1\", \"1.0.0.1\""
+        local cf_v6="\"2606:4700:4700::1111\", \"2606:4700:4700::1001\""
+        local od_v4="\"208.67.222.222\", \"208.67.220.220\""
+        local od_v6="\"2620:fe::fe\", \"2620:fe::9\""
+        local go_v4="\"8.8.8.8\", \"8.8.4.4\""
+        local go_v6="\"2001:4860:4860::8888\", \"2001:4860:4860::8844\""
+
+        # ----- IPv4 und IPv6 Upstream -----
+        if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
+            case $choice in
+                1) dns_list="[ $cf_v4, $cf_v6 ]" ;;
+                2) dns_list="[ $od_v4, $od_v6 ]" ;;
+                3) dns_list="[ $go_v4, $go_v6 ]" ;;
+                4) dns_list="[ $cf_v4, $od_v4, $go_v4, $cf_v6, $od_v6, $go_v6 ]" ;;
+            esac
+        else
+            # ----- nur IPv4 Upstream -----
+            case $choice in
+                1) dns_list="[ $cf_v4 ]" ;;
+                2) dns_list="[ $od_v4 ]" ;;
+                3) dns_list="[ $go_v4 ]" ;;
+                4) dns_list="[ $cf_v4, $od_v4, $go_v4 ]" ;;
+            esac
+        fi
+
+        if [[ "$choice" == "4" ]]; then
+            printf "\n\n⚙️ Die gewählten Upstream-Server werden eingestellt...\n"
+        else
+            printf "\n\n⚙️ Der gewählte Upstream-Server wird eingestellt...\n"
+        fi
+        # Konfiguration schreiben
+        sudo pihole-FTL --config dns.upstreams "$dns_list" > /dev/null 2>&1
+        # Pi-Hole optimieren
+        printf "\n\n⚙️ Pi-Hole wird optimiert...\n"
+        sudo pihole-FTL --config dns.cacheSize 10000 > /dev/null 2>&1
+        sudo pihole-FTL --config dns.dnssec true > /dev/null 2>&1
+        sudo pihole-FTL --config dns.rateLimit.count 5000 > /dev/null 2>&1
+        sudo pihole-FTL --config dns.cacheLocalHosts true > /dev/null 2>&1
+        sudo pihole-FTL --config dns.domainNeeded true > /dev/null 2>&1
+        sudo pihole-FTL --config database.DBinterval 5 > /dev/null 2>&1
+        # FTL neu starten
+        printf "\n\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n\n"
+        sudo systemctl restart pihole-FTL
+        printf "\n✅ DNS Upstream-Server konfiguriert und Optimierungen erfolgreich abgeschlossen.\n\n"
+    else
+        printf "\n⚠️ Pi-Hole ist nicht installiert. Upstream-Konfiguration wird übersprungen.\n\n"
     fi
-     else
-     printf "\n⚠️ Pi-hole ist nicht installiert. Upstream-Konfiguration wird übersprungen.\n\n"
-fi
+}
+
+addwhitedomains() {
+    if command -v pihole >/dev/null 2>&1; then
+        printf "\n🚀 Füge Domains hinzu, welche immer zugelassen werden...\n\n"
+
+            printf "=============================================\n"
+            printf "ℹ️ Folgende Domains werden immer zugelassen\n"
+            printf "=============================================\n"
+            printf "1. Microsoft Windows Update\n"
+            printf "2. YouTube\n\n"
+            
+        local allow_regex=(
+            "(\.|^)download\.windowsupdate\.com$"
+            "(\.|^)windowsupdate\.microsoft\.com$"
+            "(\.|^)update\.microsoft\.com$"
+            "(\.|^)download\.microsoft\.com$"
+            "(\.|^)assets\.windowsupdate\.com$"
+            "(\.|^)docs\.microsoft\.com$"
+            "^(.+.)?(youtube\.com|googlevideo\.com|ytimg\.com|\
+youtubei\.googleapis\.com|s\.youtube\.com|youtube-nocookie\.com|\
+ggpht\.com|googleusercontent\.com)$"
+        )
+
+        # SQL-Direkt-Import
+        local db="/etc/pihole/gravity.db"
+        local sql_add="INSERT OR IGNORE INTO domainlist (type, domain, enabled, comment)"
+        for regex in "${allow_regex[@]}"; do
+        sudo sqlite3 "$db" "$sql_add VALUES (2, '$regex', 1, 'Auto-Whitelist');"
+        done
+
+        printf "\n\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n\n"
+        sudo systemctl restart pihole-FTL
+
+       # Prüfen ob Domains in der Datenbank sind 
+       # pihole-FTL-inspect domains | grep "regex"
+
+        printf "\n✅ Zugelassene Domains wurden hinzugefügt.\n\n"
+    else
+        printf "\n⚠️ Pi-Hole ist nicht installiert. Vorgang abgebrochen!\n\n"
+    fi
+    printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
+    read -n 1 -s -r
 }
 
 addblocklists() {
-    # Prüfen ob "sudo" installiert ist
-    checksudo || return 1
+   # Prüfen ob "sudo" installiert ist
+   checksudo || return 1
 
+   # Prüfen ob Pi-Hole installiert ist
+   if command -v pihole >/dev/null 2>&1; then
     # Hier Blocklisten eintragen
     local blocklists=(
         "https://raw.githubusercontent.com/RPiList/specials/master/Blocklisten/child-protection"
@@ -624,7 +731,9 @@ addblocklists() {
 	"https://raw.githubusercontent.com/RPiList/specials/master/Blocklisten/DomainSquatting/INT/interactivebrokers"
 	"https://raw.githubusercontent.com/RPiList/specials/master/Blocklisten/DomainSquatting/INT/traderepublic"
     )
+    printf "\n\n"
     printf "🚀 Starte automatischen Import von weiteren %s Blocklisten - Bitte etwas Geduld...\n\n" "${#blocklists[@]}"
+    
     printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
     read -n 1 -s -r
 
@@ -636,8 +745,11 @@ addblocklists() {
     done
     clear # Bildschirm leeren
     printf "\n\n🔄 Aktualisiere Pi-Hole Gravity - Bitte warten...\n\n"
-    sudo pihole -g
+    sudo pihole -g # Blocklisten in die Datenbank einfügen
     printf "\n\n\n✅ Fertig! Alle Listen sind aktiv. Der DNS-Server ist bereit.\n\n"
+   else
+    printf "\n⚠️ Pi-Hole ist nicht installiert. Es können keine Blocklisten hinzugefügt werden! \n\n"
+   fi
 }
 
 getipv4() {
@@ -647,8 +759,8 @@ getipv4() {
  if [[ -n "$IPv4" ]]; then
  printf "\nℹ️ Die IPv4-Adresse lautet: '%s'\n\n" "$IPv4"
  else
- printf "\n⚠️ Keine IPv4-Adresse gefunden!\n\n"
- fi  
+ printf "\n⚠️ Keine IPv4-Adresse gefunden!\n\n" 
+ fi 
 }
 
 getipv6() {
@@ -911,7 +1023,7 @@ webmininstall() {
 
         printf "\n✅ Die grafische Oberfläche 'Webmin' wurde installiert. -  Zugriff über: https://%s:10000\n\n" "$(hostname -I | awk '{print $1}')"
         # Logik für den Reboot anpassen
-       if [[ "$param" == "install" ]]; then
+       if [[ "$param" == "-install" ]]; then
         printf "⌨️ Weiter mit beliebiger Taste...\n\n"
         read -n 1 -s -r
         else
@@ -1085,96 +1197,175 @@ EOF
             sudo timedatectl set-timezone Europe/Berlin 2>/dev/null
         fi
         printf "\n✅ Systemsprache und Tastatur erfolgreich auf Deutsch umgestellt.\n\n"
-        printf "\n💾 Expandiere Dateisystem auf maximale Größe...\n"
+        printf "\n💾 Expandiere Dateisystem auf maximale Größe...\n\n"
         # Der Befehl markiert die Partition für die Erweiterung beim nächsten Boot
         if sudo raspi-config --expand-rootfs > /dev/null 2>&1; then
-        printf "\n✅ Erfolg: Die Partition wird beim nächsten Neustart vergrößert.\n"
+        printf "\n✅ Erfolg: Die Partition wird beim nächsten Neustart vergrößert.\n\n"
         else
-        printf "❌ Fehler: Dateisystem konnte nicht expandiert werden.\n"
+        printf "❌ Fehler: Dateisystem konnte nicht expandiert werden.\n\n"
         fi
         return 1
     else
-        printf "\nℹ️ Systemsprache und Tastatur sind bereits auf Deutsch eingestellt.\n"
+        printf "\nℹ️ Systemsprache und Tastatur sind bereits auf Deutsch eingestellt.\n\n"
         return 0
     fi
 }
 
 setfail2banjail() {
-    printf "\n🛡️  Konfiguriere Fail2Ban Schutz (SSH, Webmin & IPv6)...\n\n"
+    printf "\n🛡️ Konfiguriere Fail2Ban Schutz (dynamische Erkennung)...\n\n"
     
-    # Aktuelle IP für die Whitelist ermitteln
-    local my_ip
-    my_ip=$(hostname -I | awk '{print $1}')
+    local my_ip=$(hostname -I | awk '{print $1}')
     
-    # 1. Datei: /etc/fail2ban/fail2ban.local (IPv6-Unterstützung)
-    local f2b_conf="/etc/fail2ban/fail2ban.local"
-    local ipv6_entry="allowipv6 = auto"
+    # --- Check: Was ist wirklich installiert und aktiv? ---
+    local apache_active="false"
+    local lighttpd_active="false"
+    local webmin_active="false"
+    local ssh_active="false"
 
-    if [ -f "$f2b_conf" ] && grep -qF "$ipv6_entry" "$f2b_conf"; then
-        printf "\nℹ️  IPv6-Einstellung ist bereits in fail2ban.local vorhanden.\n\n"
-    else
-        printf "\n➕ Konfiguriere IPv6-Unterstützung...\n\n"
-        if [ ! -f "$f2b_conf" ]; then
-            echo "[DEFAULT]" | sudo tee "$f2b_conf" > /dev/null
-        fi
-        echo "$ipv6_entry" | sudo tee -a "$f2b_conf" > /dev/null
+    # Prüfen ob die Dienste/Verzeichnisse existieren
+    command -v apache2 >/dev/null 2>&1 && apache_active="true"
+    command -v lighttpd >/dev/null 2>&1 && lighttpd_active="true"
+    [[ -d "/etc/webmin" ]] && webmin_active="true"
+
+    # Prüfen ob SSH im System aktiv ist
+    systemctl is-active --quiet ssh && ssh_active="true"
+ 
+    # 1. Datei: fail2ban.local (IPv6 Support - nur wenn IPv6 aktiviert ist)
+    if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
+      local f2b_conf="/etc/fail2ban/fail2ban.local"
+      if ! grep -q "allowipv6 = auto" "$f2b_conf" 2>/dev/null; then
+        printf "➕ Konfiguriere IPv6-Unterstützung...\n"
+        echo -e "[DEFAULT]\nallowipv6 = auto" | sudo tee "$f2b_conf" > /dev/null
+      fi
     fi
 
-    # 2. Datei: /etc/fail2ban/jail.local (SSH & Allgemein)
-    printf "\n➕ Erstelle jail.local (SSH-Schutz)...\n\n"
+    # 2. Datei: jail.local (Zentrale Konfiguration)
+    printf "➕ Erstelle Datei: 'jail.local'...\n"
     sudo cat <<EOF | sudo tee /etc/fail2ban/jail.local > /dev/null
-##### SSH Server Fail2Ban #####
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 $my_ip
+bantime  = 86400
+maxretry = 5
+backend  = systemd
 
 [sshd]
-enabled = true
-port = ssh
-filter = sshd
-logpath = /var/log/auth.log
-maxretry = 5
-bantime = 86400
-ignoreip = whitelist-IP
-backend = systemd
+enabled = $ssh_active
+port    = ssh
+filter  = sshd
 
 [apache-auth]
-enabled = false
+enabled = $apache_active
 filter  = apache-auth
-bantime = 86400
-maxretry = 5
-ignoreip = whitelist-IP
+port    = http,https
+logpath = /var/log/apache2/error.log
 
 [lighttpd-custom]
-enabled = false
-filter = lighttpd-custom
-port = http,https
+enabled = $lighttpd_active
+port    = http,https
 logpath = /var/log/lighttpd/error.log
-bantime = 86400
-maxretry = 2
-ignoreip = whitelist-IP
+filter  = lighttpd-custom
 EOF
 
-    # 3. Datei: /etc/fail2ban/jail.d/webmin.conf (Webmin Schutz)
-    printf "\n➕ Erstelle webmin.conf (Port 10000)...\n\n"
-    sudo cat <<EOF | sudo tee /etc/fail2ban/jail.d/webmin.conf > /dev/null
+    # 3. Webmin Jail Logik (Nur wenn Webmin aktiv ist)
+    if [[ "$webmin_active" == "true" ]]; then
+        printf "➕ Erstelle Datei 'webmin.conf'...\n"
+        sudo cat <<EOF | sudo tee /etc/fail2ban/jail.d/webmin.conf > /dev/null
 [webmin-auth]
-enabled = true
+enabled = $webmin_active
 port    = 10000
 filter  = webmin-auth
-logpath = /var/log/auth.log
-maxretry = 5
-bantime = 86400
-ignoreip = whitelist-IP
 backend = systemd
 EOF
-
-    # Neustart und Status
-    printf "\n🔄 Starte Fail2Ban Dienst neu...\n\n"
-    sudo systemctl restart fail2ban
-    
-    if systemctl is-active --quiet fail2ban; then
-        printf "\n✅ Fail2Ban erfolgreich konfiguriert und aktiv.\n\n"
     else
-        printf "\n❌ Fehler: Fail2Ban konnte nicht gestartet werden. Bitte Logs prüfen.\n\n"
+        sudo rm -f /etc/fail2ban/jail.d/webmin.conf 2>/dev/null
+        printf "\n🧹 Die grafische Oberfläche 'Webmin' wurde nicht gefunden – Jail-Datei wird entfernt!\n"
+    fi
+
+    # Neustart und Status-Ausgabe
+    printf "\n🔄 Der 'Fail2Ban' Dienst wird neu gestartet...\n\n"
+    sudo systemctl restart fail2ban
+
+    if systemctl is-active --quiet fail2ban; then
+        printf "\n✅ Die 'Fail2Ban' Konfiguration ist abgeschlossen:\n"
+        printf "   - SSH:      $([[ "$ssh_active" == "true" ]] && echo "AKTIV ✅" || echo "INAKTIV ❌")\n"
+        printf "   - Webmin:   $([[ "$webmin_active" == "true" ]] && echo "AKTIV ✅" || echo "INAKTIV ❌")\n"
+        printf "   - Webserver: $([[ "$apache_active" == "true" || "$lighttpd_active" == "true" ]] && echo "AKTIV ✅" || echo "INAKTIV ❌")\n\n"
+    else
+        printf "\n❌ Fehler beim Starten von 'Fail2Ban' - Abbruch!\n\n"
     fi
 }
 
-piholeinstall # Bei der Anmeldung Pi-Hole installieren wenn noch nicht geschehen.
+storagestatus() {
+    # Parameter in Variable speichern
+    local param="$1"
+
+    # Check: Ist Pi-Hole installiert?
+    if command -v pihole >/dev/null 2>&1; then
+    printf "\n"
+    printf "==================================\n"
+    printf "🗄️ Pi-Hole SPEICHER-STATUS\n"
+    printf "==================================\n"
+
+    # Disk-Info und Datenbankgrößen ermitteln
+    local fmt='s/\([0-9]\)\([GKkM]\)/\1 \2Byte/'
+    local disk_info=$(df -h / | awk 'NR==2 {print $5}' | sed 's/%/ %/')
+    local g_db="/etc/pihole/gravity.db"
+    local f_db="/etc/pihole/pihole-FTL.db"
+    local gravity_size=$(sudo du -sh "$g_db" 2>/dev/null | awk '{print $1}' | sed "$fmt")
+    local ftl_size=$(sudo du -sh "$f_db" 2>/dev/null | awk '{print $1}' | sed "$fmt")
+
+     # Ausgabe
+     printf "\n📍 Datenträger belegt zu: %s\n\n" "$disk_info"
+     printf "📝 Blocklisten-DB:    %s\n" "${gravity_size:-0 Byte}"
+     printf "📈 Statistik-DB:      %s\n" "${ftl_size:-0 Byte}"
+     printf -- "----------------------------------\n\n"
+   else
+      if [[ "$param" != "-phc" ]]; then
+      printf "\n⚠️ Pi-Hole ist nicht installiert. Der Speicherstatus kann nicht angezeigt werden! \n\n"
+      fi
+    fi
+}
+
+clearpiholelogs() {
+    # Check: Ist Pi-Hole installiert?
+    if command -v pihole >/dev/null 2>&1; then
+    printf "\n"
+    printf "\n⚠️  WARNUNG: Dies wird das gesamte Query-Log und alle\n"
+    printf "   Statistiken (Grafiken/Historie) dauerhaft löschen!\n\n"
+
+    read -r -p "❓ Möchten Sie die Pi-Hole Logs und Statistiken wirklich löschen? (ja/nein): " logconfirm
+
+    if [[ "$logconfirm" == "ja" ]]; then
+        printf "\n🧹 Lösche Pi-Hole Logs und Statistiken - Bitte warten...\n\n"
+
+        # 1. Dienst stoppen
+        sudo systemctl stop pihole-FTL > /dev/null 2>&1
+
+        # 2. Die Statistik-Datenbank löschen
+        if [ -f "/etc/pihole/pihole-FTL.db" ]; then
+            sudo rm /etc/pihole/pihole-FTL.db
+            printf "\n✅ Die Statistik-Datenbank wurde gelöscht.\n"
+        fi
+
+        # 3. Das Text-Log leeren
+        if [ -f "/var/log/pihole/pihole.log" ]; then
+            sudo truncate -s 0 /var/log/pihole/pihole.log
+            printf "\n✅ Das Text-Log von Pi-Hole wurde geleert.\n"
+        fi
+
+        # 4. Dienst wieder starten
+        sudo systemctl start pihole-FTL > /dev/null 2>&1
+        printf "✨ Alle Logs und Statistiken wurden erfolgreich gelöscht - Bitte warten...\n\n"
+        sleep 5
+        if systemctl is-active --quiet pihole-FTL; then
+        storagestatus # Speicher Status anzeigen
+        fi
+    else
+        printf "\n🔄 Vorgang abgebrochen. Die Logs und Statistiken bleiben erhalten.\n\n"
+    fi
+    else 
+    printf "\n⚠️ Pi-Hole ist nicht installiert. Der Vorgang kann nicht ausgeführt werden! \n\n"
+    fi
+}
+
+piholeinstall # Bei der Anmeldung - Pi-Hole installieren wenn noch nicht geschehen.
