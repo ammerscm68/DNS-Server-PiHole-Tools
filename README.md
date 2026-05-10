@@ -14,6 +14,10 @@ getipv4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 getipv6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
 setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
 storagestatus &nbsp;&nbsp;&nbsp;(Displays the Memory usage of the Pi-hole Databases) <br>
+bootconfig  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
+expandfilesystem &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
+upstreamdns &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Selection of Pi-hole Upstream Servers for IPv4 and IPv6) <br>
+clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
