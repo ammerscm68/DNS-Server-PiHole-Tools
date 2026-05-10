@@ -16,7 +16,7 @@ setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
 storagestatus &nbsp;&nbsp;&nbsp;(Displays the Memory usage of the Pi-hole Databases) <br>
 bootconfig  &nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
 expandfilesystem &nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
-upstreamdns &nbsp;&nbsp;&nbsp;(Selection of Pi-hole Upstream Servers for IPv4 and IPv6) <br>
+upstreamdns &nbsp;&nbsp;&nbsp;(Selection of Pi-Hole Upstream Servers for IPv4 and IPv6) <br>
 clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
