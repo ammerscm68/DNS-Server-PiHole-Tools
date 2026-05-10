@@ -182,7 +182,7 @@ fi
 #     DNS-Tools (Assistent)
 #
 #          Mai 2026
-# Version 1.5 von Mario Ammerschuber
+# Version 1.6 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
@@ -192,6 +192,66 @@ checksudo() {
     printf "\n📍 Bitte melden Sie sich als 'Root' an und installieren es mit: > apt update && apt upgrade && apt install sudo\n\n"
     return 1
   fi
+}
+
+bootconfig() {
+    printf "\n🚀 Optimiere Boot-Konfiguration für USB-Modus...\n"
+    
+    local boot_conf="/boot/firmware/config.txt"
+    # Fallback für ältere OS-Versionen
+    [ ! -f "$boot_conf" ] && boot_conf="/boot/config.txt"
+
+    # PRÜFUNG: Ist der Eintrag schon vorhanden?
+    if grep -q "program_usb_boot_mode=1" "$boot_conf"; then
+        printf "\nℹ️ Boot-Parameter sind bereits in %s konfiguriert.\n\n" "$boot_conf"
+        return 0
+    else
+        printf "\n➕ Füge Boot-Parameter hinzu...\n\n"
+    if sudo bash -c "cat >> $boot_conf" <<-EOF > /dev/null 2>&1
+# --- USB Boot & Power Tuning ---
+program_usb_boot_mode=1
+max_usb_current=1
+boot_delay=15
+program_usb_boot_timeout=1
+EOF
+    then
+    printf "\n✅ Boot-Parameter wurden erfolgreich hinzugefügt.\n\n"
+    return 1
+     else
+     printf "\n❌ Fehler: Boot-Parameter konnten nicht gespeichert werden !\n\n"
+     return 2 # FEHLER: Schreiben fehlgeschlagen!
+    fi
+  fi
+}
+
+expandfilesystem() {
+    printf "\n🚀 Prüfe Datenträger auf ungenutzten Speicherplatz...\n"
+    # 1. Check: Ist das benötigte Werkzeug vorhanden?
+    if ! command -v growpart >/dev/null 2>&1; then
+        printf "\n❌ Fehler: Dateisystem konnte nicht expandiert werden.\n\n"
+        printf "     Das Paket 'cloud-guest-utils' ist nicht installiert.\n"
+        printf "     Bitte installieren Sie es manuell mit: sudo apt install cloud-guest-utils\n"
+        return 1
+    fi
+    # 2. Root-Laufwerk und Partition ermitteln
+    local root_dev=$(findmnt -n -o SOURCE /)
+    local parent_dev=$(lsblk -no PKNAME "$root_dev")
+    local part_num=$(echo "$root_dev" | grep -o '[0-9]\+$')
+
+    if [ -z "$parent_dev" ]; then
+        printf "⚠️ Die Laufwerksstruktur konnte nicht ermittelt werden. Expansion abgebrochen.\n"
+        return 1
+    fi
+    # 3. Versuch die Partition zu vergrößern
+    printf "\n💾 Expandiere Dateisystem auf maximale Größe...\n\n"
+    # growpart gibt 0 bei Erfolg und 1 bei "kein Platz" zurück
+    if sudo growpart "/dev/$parent_dev" "$part_num" > /dev/null 2>&1; then
+        # 4. Das Dateisystem online vergrößern
+        sudo resize2fs "$root_dev" > /dev/null 2>&1
+        printf "✅ Erfolg: Die Partition wurde auf die volle Größe erweitert.\n"
+    else
+        printf "ℹ️ Hinweis: Die Partition nutzt bereits den gesamten verfügbaren Speicherplatz.\n"
+    fi
 }
 
 checkosversion() {
@@ -208,12 +268,25 @@ checkosversion() {
         return 1
     fi
 
-    # 2. Vergleich: muss Version 12 (Bookworm) oder höher sein
-    if (( os_ver >= 12 )); then
-        printf "\n✅ Systemversion %s erkannt (OK).\n\n" "$os_ver"
-        return 0
+    # 2. Vergleich: muss Version 13 (Trixi) oder höher sein
+    if [ "$os_ver" -ge 13 ] 2>/dev/null; then
+        printf "\n✅ Systemversion %s erkannt (OK).\n\n" "$os_ver" 
+        # ========================================================
+        local_lang_de # Sprache auf Deutsch einstellen
+        local lang_changed=$?
+        bootconfig # zusätzliche Bootparameter eintragen
+        local boot_changed=$?
+          # Neustart wenn nötig
+          if [ $lang_changed -ne 0 ] || [ $boot_changed -ne 0 ]; then
+          printf "\n🚀 Das System muss neu starten, um die Änderungen zu aktivieren.\n\n"
+          printf "\n🔄 Der Neustart erfolgt in 10 Sekunden (Abbruch mit Strg+C)...\n\n"
+          sleep 10
+          sudo reboot
+          return 1
+          fi
+       return 0
     else
-        printf "\n❌ Fehler: Diese Funktionssammlung benötigt mindestens Version 12 (Bookworm) des Betriebssystems.\n\n"
+        printf "\n❌ Fehler: Diese Funktionssammlung benötigt mindestens Version 13 (Trixi) des Betriebssystems.\n\n"
         printf "\n⚠️ Die aktuelle Version ist: %s\n\n" "$os_ver"
         printf "\n🚫 Leider müssen wir an dieser Stelle abbrechen.\n\n"
         return 1
@@ -221,28 +294,42 @@ checkosversion() {
 }
 
 checkpartitionsize() {
-      # --- Systemsprache auf Deutsch umstellen und Partition Expandieren ------------------------
-      if ! local_lang_de; then
-          printf "\n🚀 Das System muss neu starten, um die Änderungen zu aktivieren.\n\n"
-          printf "\n🔄 Der Neustart erfolgt in 15 Sekunden (Abbruch mit Strg+C)...\n\n"
-          sleep 15
-          sudo reboot
-          return 1
-      fi
-
     printf "\n📊 Prüfe verfügbaren Speicherplatz...\n\n"
-    # Liest die Größe von / in Kilobytes aus
-    local root_size_kb=$(df / --output=size | tail -1)
-    # Umrechnung in GB (durch 1024 / 1024)
-    local root_size_gb=$((root_size_kb / 1024 / 1024))
+    
+    # Funktion zur Größenermittlung
+    get_size_mb() {
+        # awk entfernt hierbei automatisch alle führenden Leerzeichen
+        df -m / --output=size | tail -1 | awk '{print $1}'
+    }
 
-    if [ "$root_size_gb" -lt 16 ]; then
-        printf "\n⚠️ ACHTUNG: Die Partition ist nur %s GB groß.\n\n" "$root_size_gb"
-        printf "\n❌ Pi-Hole benötigt ein Speichermedium mit mindestens 16 GB für einen reibungslosen Betrieb.\n"
-        printf "\n🛑 Vorgang wird abgebrochen !\n\n"
+    local root_size_mb=$(get_size_mb)
+    local min_size_mb=15360 # 15 GB in MB
+
+    # 2. Expansion versuchen, wenn zu klein
+    if [ "$root_size_mb" -lt "$min_size_mb" ]; then
+        # MB zu GB umrechnen für die Anzeige
+        local root_size_display=$((root_size_mb / 1024))
+        
+        printf "\nℹ️ Die Partition ist zu klein (%s GB). Versuche Expansion...\n\n" "$root_size_display"
+        expandfilesystem 
+        
+        # Größe nach Expansion neu einlesen
+        root_size_mb=$(get_size_mb)
+    fi
+
+    # 3. Finaler Check
+    local root_size_gb=$((root_size_mb / 1024))
+
+    if [ "$root_size_mb" -lt "$min_size_mb" ]; then
+        printf "\n⚠️ ACHTUNG: Die Partition ist zu klein (%s GB).\n\n" "$root_size_gb"
+        printf "\n❌ Pi-Hole benötigt ein Speichermedium mit mindestens 16 GB für einen reibungslosen Betrieb.\n\n"
+        printf "\n🛑 Vorgang abgebrochen!\n\n"
         return 1
     else
         printf "\n✅ Speicherplatz okay: %s GB erkannt.\n\n" "$root_size_gb"
+        printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
+        read -n 1 -s -r
+        clear
         return 0
     fi
 }
@@ -258,6 +345,9 @@ piholeinstall() {
     return 0 # Installation abbrechen
     fi
 
+    # Prüfen ob die Bedingung der OS-Version stimmt
+    checkosversion || return 1
+
     # Prüfen ob genug Speicherplatz vorhanden ist (min. 16 GB)
     checkpartitionsize || return 1
 
@@ -272,7 +362,7 @@ piholeinstall() {
     printf "🏠 Pi-Hole Installations-Assistent\n"
     printf "==================================\n\n"
     printf "\nℹ️  Das offizielle Installations-Skript wird geladen...\n\n"
-
+    
     # Aktives Interface ermitteln (Sprachneutral)
     local interface
     interface=$(nmcli -t -f DEVICE,STATE device status | grep -E ":connected|:verbunden" | head -n 1 | cut -d: -f1)
@@ -442,58 +532,65 @@ upstreamdns() {
 
         while true; do
             clear
-            printf "\n"
-            printf "========================================\n"
+            printf "============================================\n"
             printf "🌐 Auswahl der Upstream DNS-Server\n"
-            printf "========================================\n"
-            printf "1) Cloudflare (Empfohlen)\n"
+            printf "============================================\n"
+            printf "1) Cloudflare\n"
             printf "2) OpenDNS\n"
-            printf "3) Google\n"
-            printf "4) ALLE (Cloudflare, OpenDNS, Google)\n"
-            printf -- "----------------------------------------\n\n"
-            read -p "👉 Bitte wählen (1-4): " choice
+            printf "3) Quad9 (filtered, DNSSEC)\n"
+            printf "4) Cloudflare und OpenDNS (Empfohlen)\n"
+            printf "5) Cloudflare und Quad9 (filtered, DNSSEC)\n"
+            printf "6) OpenDNS und Quad9 (filtered, DNSSEC)\n"
+            printf "7) ALLE (Cloudflare, OpenDNS, Quad9)\n"
+            printf -- "--------------------------------------------\n\n"
+            read -p "👉 Bitte wählen (1-7): " choice
 
-            if [[ "$choice" =~ ^[1-4]$ ]]; then
+            if [[ "$choice" =~ ^[1-7]$ ]]; then
                 break 
             else
-                printf "\n❌ Ungültige Eingabe! Bitte wählen Sie eine Zahl von 1 bis 4.\n"
+                printf "\n❌ Ungültige Eingabe! Bitte wählen Sie eine Zahl von 1 bis 7.\n"
                 sleep 3
             fi
         done
 
+        if (( choice > 3 )); then
+            printf "\n\n⚙️ Die gewählten Upstream-Server werden eingestellt...\n"
+        else
+            printf "\n\n⚙️ Der gewählte Upstream-Server wird eingestellt...\n"
+        fi    
+        
         # Lokale Variablen für alle Varianten deklarieren
         local cf_v4="\"1.1.1.1\", \"1.0.0.1\""
         local cf_v6="\"2606:4700:4700::1111\", \"2606:4700:4700::1001\""
         local od_v4="\"208.67.222.222\", \"208.67.220.220\""
-        local od_v6="\"2620:fe::fe\", \"2620:fe::9\""
-        local go_v4="\"8.8.8.8\", \"8.8.4.4\""
-        local go_v6="\"2001:4860:4860::8888\", \"2001:4860:4860::8844\""
+        local od_v6="\"2620:119:35::35\", \"2620:119:53::53\""
+        local q9_v4="\"9.9.9.9\", \"149.112.112.112\""
+        local q9_v6="\"2620:fe::fe\", \"2620:fe::9\""
 
         # ----- IPv4 und IPv6 Upstream -----
         if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
             case $choice in
                 1) dns_list="[ $cf_v4, $cf_v6 ]" ;;
                 2) dns_list="[ $od_v4, $od_v6 ]" ;;
-                3) dns_list="[ $go_v4, $go_v6 ]" ;;
-                4) dns_list="[ $cf_v4, $od_v4, $go_v4, $cf_v6, $od_v6, $go_v6 ]" ;;
+                3) dns_list="[ $q9_v4, $q9_v6 ]" ;;
+                4) dns_list="[ $cf_v4, $od_v4, $cf_v6, $od_v6 ]" ;;
+                5) dns_list="[ $cf_v4, $q9_v4, $cf_v6, $q9_v6 ]" ;;
+                6) dns_list="[ $od_v4, $q9_v4, $od_v6, $q9_v6 ]" ;;
+                7) dns_list="[ $cf_v4, $od_v4, $q9_v4, $cf_v6, $od_v6, $q9_v6 ]" ;;
             esac
         else
             # ----- nur IPv4 Upstream -----
             case $choice in
                 1) dns_list="[ $cf_v4 ]" ;;
                 2) dns_list="[ $od_v4 ]" ;;
-                3) dns_list="[ $go_v4 ]" ;;
-                4) dns_list="[ $cf_v4, $od_v4, $go_v4 ]" ;;
+                3) dns_list="[ $q9_v4 ]" ;;
+                4) dns_list="[ $cf_v4, $od_v4 ]" ;;
+                5) dns_list="[ $cf_v4, $q9_v4 ]" ;;
+                6) dns_list="[ $od_v4, $q9_v4 ]" ;;
+                7) dns_list="[ $cf_v4, $od_v4, $q9_v4 ]" ;;
             esac
         fi
 
-        if [[ "$choice" == "4" ]]; then
-            printf "\n\n⚙️ Die gewählten Upstream-Server werden eingestellt...\n"
-        else
-            printf "\n\n⚙️ Der gewählte Upstream-Server wird eingestellt...\n"
-        fi
-        # Konfiguration schreiben
-        sudo pihole-FTL --config dns.upstreams "$dns_list" > /dev/null 2>&1
         # Pi-Hole optimieren
         printf "\n\n⚙️ Pi-Hole wird optimiert...\n"
         sudo pihole-FTL --config dns.cacheSize 10000 > /dev/null 2>&1
@@ -502,9 +599,33 @@ upstreamdns() {
         sudo pihole-FTL --config dns.cacheLocalHosts true > /dev/null 2>&1
         sudo pihole-FTL --config dns.domainNeeded true > /dev/null 2>&1
         sudo pihole-FTL --config database.DBinterval 5 > /dev/null 2>&1
+        sudo pihole-FTL --config dns.upstreams "$dns_list" > /dev/null 2>&1
+
+        if [ -f "/etc/pihole/setupVars.conf" ]; then
+         sudo sed -i '/PIHOLE_DNS_/d' /etc/pihole/setupVars.conf > /dev/null 2>&1
+        fi
+        printf "\n🔄 Die Pi-Hole FTL wird gestoppt - Bitte warten...\n\n\n"
+        sudo systemctl stop pihole-FTL > /dev/null 2>&1
+        sleep 3
+        printf "\n⚙️ Die FTL-Datenbank wird angepasst...\n\n"
+        local ddb="/etc/pihole/pihole-FTL.db"
+        if [ -f "$ddb" ]; then
+            # Wir löschen den Key komplett, statt ihn nur zu updaten
+            sudo sqlite3 "$ddb" "DELETE FROM config WHERE key = 'dns.upstreams';" > /dev/null 2>&1
+        fi
+        # Die FTL-Datenbank-Konfiguration zwingend setzen
+        local udb="/etc/pihole/pihole-FTL.db"
+        if [ -f "$udb" ]; then
+            # Wir prüfen kurz, ob die Tabelle 'config' existiert
+            local table_check=$(sudo sqlite3 "$udb" "SELECT name FROM sqlite_master WHERE type='table' AND name='config';")
+            if [[ -n "$table_check" ]]; then
+              sudo sqlite3 "$udb" "INSERT OR REPLACE INTO config (key, value) VALUES ('dns.upstreams', '$dns_list');" > /dev/null 2>&1
+            fi
+        fi
         # FTL neu starten
-        printf "\n\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n\n"
-        sudo systemctl restart pihole-FTL
+        printf "\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n"      
+        sudo systemctl start pihole-FTL > /dev/null 2>&1
+        sleep 3
         printf "\n✅ DNS Upstream-Server konfiguriert und Optimierungen erfolgreich abgeschlossen.\n\n"
     else
         printf "\n⚠️ Pi-Hole ist nicht installiert. Upstream-Konfiguration wird übersprungen.\n\n"
@@ -540,8 +661,8 @@ ggpht\.com|googleusercontent\.com)$"
         sudo sqlite3 "$db" "$sql_add VALUES (2, '$regex', 1, 'Auto-Whitelist');"
         done
 
-        printf "\n\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n\n"
-        sudo systemctl restart pihole-FTL
+       printf "\n\n🔄 Die Pi-Hole FTL wird neu gestartet - Bitte warten...\n\n\n"
+       sudo systemctl restart pihole-FTL
 
        # Prüfen ob Domains in der Datenbank sind 
        # pihole-FTL-inspect domains | grep "regex"
@@ -834,7 +955,7 @@ setstaticip() {
     fi
 
     if [[ "$method" == "manual" ]]; then
-        printf "\n✅ Das Interface [%s] nutzt eine STATISCHE IP-Adresse.\n\n" "$interface"
+        printf "\n✅ Das Netzwerk-Interface [%s] nutzt eine STATISCHE IP-Adresse.\n\n" "$interface"
         return 0
     fi
 
@@ -844,7 +965,7 @@ setstaticip() {
     fi
 
     # 3. Umstellung anbieten
-    printf "\n🌐 Aktueller Status für [%s]: DHCP (Dynamische IP-Adresse)\n\n" "$interface"
+    printf "\n🌐 Aktueller Status für Netzwerk-Interface [%s]: DHCP (Dynamische IP-Adresse)\n\n" "$interface"
     printf "\n\n"
     read -r -p "❓ Möchten Sie jetzt auf eine STATISCHE IPv4-Adresse umstellen? (ja/nein/nie): " sip_antwort
 
@@ -1049,7 +1170,7 @@ autoupdate() {
     local script_path="/home/$USER/systemupdate.sh"
     local log_path="/home/$USER/systemupdate.log"
     local param="$1"
-    local cron_entry=$(cat <<EOF
+    local cron_entry=$(cat <<-EOF
 # Edit this file to introduce tasks to be run by cron.
 #
 # Each task to run has to be defined through a single line
@@ -1105,7 +1226,7 @@ EOF
         fi
 
         # Datei erstellen mit Here-Doc (Nutzt $USER dynamisch)
-        cat <<EOF > "$script_path"
+        cat <<-EOF > "$script_path"
 #!/bin/bash
 rm -f "$log_path"
 date > "$log_path" 2>&1
@@ -1164,14 +1285,13 @@ local_lang_de() {
 
     if [[ $kbd_check -eq 0 || $lang_check -eq 0 ]]; then
         # Betriebssystem Version prüfen
-        checkosversion || return 1
         export LC_ALL=C.UTF-8
         export LANG=C.UTF-8
         export LANGUAGE=C.UTF-8
         printf "\n🌐 Stelle Systemsprache und Tastatur auf Deutsch um - Bitte warten...\n\n\n"
 
         # Tastatur-Konfiguration schreiben
-        cat <<EOF | sudo tee /etc/default/keyboard > /dev/null
+        cat <<-EOF | sudo tee /etc/default/keyboard > /dev/null
 XKBMODEL="pc105"
 XKBLAYOUT="de"
 XKBVARIANT=""
@@ -1197,13 +1317,6 @@ EOF
             sudo timedatectl set-timezone Europe/Berlin 2>/dev/null
         fi
         printf "\n✅ Systemsprache und Tastatur erfolgreich auf Deutsch umgestellt.\n\n"
-        printf "\n💾 Expandiere Dateisystem auf maximale Größe...\n\n"
-        # Der Befehl markiert die Partition für die Erweiterung beim nächsten Boot
-        if sudo raspi-config --expand-rootfs > /dev/null 2>&1; then
-        printf "\n✅ Erfolg: Die Partition wird beim nächsten Neustart vergrößert.\n\n"
-        else
-        printf "❌ Fehler: Dateisystem konnte nicht expandiert werden.\n\n"
-        fi
         return 1
     else
         printf "\nℹ️ Systemsprache und Tastatur sind bereits auf Deutsch eingestellt.\n\n"
@@ -1215,7 +1328,7 @@ setfail2banjail() {
     printf "\n🛡️ Konfiguriere Fail2Ban Schutz (dynamische Erkennung)...\n\n"
     
     local my_ip=$(hostname -I | awk '{print $1}')
-    
+
     # --- Check: Was ist wirklich installiert und aktiv? ---
     local apache_active="false"
     local lighttpd_active="false"
@@ -1226,10 +1339,10 @@ setfail2banjail() {
     command -v apache2 >/dev/null 2>&1 && apache_active="true"
     command -v lighttpd >/dev/null 2>&1 && lighttpd_active="true"
     [[ -d "/etc/webmin" ]] && webmin_active="true"
-
+    
     # Prüfen ob SSH im System aktiv ist
     systemctl is-active --quiet ssh && ssh_active="true"
- 
+
     # 1. Datei: fail2ban.local (IPv6 Support - nur wenn IPv6 aktiviert ist)
     if ip -6 addr show 2>/dev/null | grep -q "scope global"; then
       local f2b_conf="/etc/fail2ban/fail2ban.local"
@@ -1241,7 +1354,7 @@ setfail2banjail() {
 
     # 2. Datei: jail.local (Zentrale Konfiguration)
     printf "➕ Erstelle Datei: 'jail.local'...\n"
-    sudo cat <<EOF | sudo tee /etc/fail2ban/jail.local > /dev/null
+    sudo cat <<-EOF | sudo tee /etc/fail2ban/jail.local > /dev/null
 [DEFAULT]
 ignoreip = 127.0.0.1/8 ::1 $my_ip
 bantime  = 86400
@@ -1269,7 +1382,7 @@ EOF
     # 3. Webmin Jail Logik (Nur wenn Webmin aktiv ist)
     if [[ "$webmin_active" == "true" ]]; then
         printf "➕ Erstelle Datei 'webmin.conf'...\n"
-        sudo cat <<EOF | sudo tee /etc/fail2ban/jail.d/webmin.conf > /dev/null
+        sudo cat <<-EOF | sudo tee /etc/fail2ban/jail.d/webmin.conf > /dev/null
 [webmin-auth]
 enabled = $webmin_active
 port    = 10000
@@ -1284,7 +1397,7 @@ EOF
     # Neustart und Status-Ausgabe
     printf "\n🔄 Der 'Fail2Ban' Dienst wird neu gestartet...\n\n"
     sudo systemctl restart fail2ban
-
+    
     if systemctl is-active --quiet fail2ban; then
         printf "\n✅ Die 'Fail2Ban' Konfiguration ist abgeschlossen:\n"
         printf "   - SSH:      $([[ "$ssh_active" == "true" ]] && echo "AKTIV ✅" || echo "INAKTIV ❌")\n"
