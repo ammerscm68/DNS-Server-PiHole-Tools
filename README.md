@@ -3,20 +3,20 @@
 <br>
 <strong>Individual commands:</strong>
 <br>
-piholeinstall &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
-addblocklists &nbsp;&nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
+piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
+addblocklists &nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 addwhitedomains &nbsp;&nbsp;&nbsp;(Automatic add Allow Domains for PiHole) <br>
-setstaticip &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
-webmininstall &nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
-autoupdate &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Automatic System-Updates with a CronJob) <br>
-upstreamdns &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Google - ipv4 and ipv6) <br>
-getipv4 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
-getipv6 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
+setstaticip &nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
+webmininstall &nbsp;&nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management) <br>
+autoupdate &nbsp;&nbsp;&nbsp;(Automatic System-Updates with a CronJob) <br>
+upstreamdns &nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Google - ipv4 and ipv6) <br>
+getipv4 &nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
+getipv6 &nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
 setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
 storagestatus &nbsp;&nbsp;&nbsp;(Displays the Memory usage of the Pi-hole Databases) <br>
-bootconfig  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
-expandfilesystem &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
-upstreamdns &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Selection of Pi-hole Upstream Servers for IPv4 and IPv6) <br>
+bootconfig  &nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
+expandfilesystem &nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
+upstreamdns &nbsp;&nbsp;&nbsp;(Selection of Pi-hole Upstream Servers for IPv4 and IPv6) <br>
 clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
