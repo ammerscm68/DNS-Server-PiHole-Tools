@@ -22,7 +22,7 @@ Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
 <br>
 The installation process will start the next time you <strong>restart and login</strong>, and you will <br>
-be guided interactively through the installation steps - and more. <br>
+be guided interactively through the installation steps - <strong>and more</strong>. <br>
 <br>
 <strong>Pi-hole then queries the following directly:</strong>
 <br>
