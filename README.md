@@ -1,6 +1,10 @@
 # DNS-Server Tools for easy interactive <br>
 # installation of "Pi-Hole" and more (Raspberry Pi) <br>
 <br>
+<br>
+<strong>Version 2 has been completely overhauled, including bug fixes.</strong><br>
+<br>
+<br>
 <strong>Individual commands:</strong>
 <br>
 piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
