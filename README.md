@@ -5,7 +5,6 @@
 <strong>Version 2 has been completely overhauled, including bug fixes.</strong><br>
 ***********************************************************************<br>
 <br>
-<br>
 <strong>Individual commands:</strong>
 <br>
 piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
