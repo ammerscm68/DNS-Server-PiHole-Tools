@@ -26,6 +26,7 @@ getroutermodel &nbsp;&nbsp;&nbsp;(Displays the Name of your Router) <br>
 setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole, Webmin, CUPS)
 printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers)
 <br>
+<br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
 <br>
