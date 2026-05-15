@@ -12,7 +12,7 @@ addblocklists &nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 addwhitedomains &nbsp;&nbsp;&nbsp;(Automatic add Allow Domains for PiHole) <br>
 setstaticip &nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
 webmininstall &nbsp;&nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management - [Optional]) <br>
-autoupdate &nbsp;&nbsp;&nbsp;(Automatic System-Updates with a CronJob) <br>
+autoupdate &nbsp;&nbsp;&nbsp;(Automatic System-Updates with a CronJob - [Optional]) <br>
 upstreamdns &nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Quad9 or Combinations - ipv4 and ipv6) <br>
 getipv4 &nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
 getipv6 &nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
