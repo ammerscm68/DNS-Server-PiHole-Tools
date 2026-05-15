@@ -18,7 +18,7 @@ getipv4 &nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
 getipv6 &nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
 setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
 storagestatus &nbsp;&nbsp;&nbsp;(Displays the Memory usage of the Pi-hole Databases) <br>
-bootconfig  &nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
+bootconfig  &nbsp;&nbsp;&nbsp;(Boot Customizations- USB, Bluetooth and WiFi) <br>
 expandfilesystem &nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
 clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
 setrouterconfig &nbsp;&nbsp;&nbsp;(Display showing which Data must be entered into the Router) <br>
