@@ -29,11 +29,16 @@ bootconfig() {
         printf "\n➕ Füge Boot-Parameter hinzu...\n\n"
     if sudo bash -c "cat >> $boot_conf" <<-EOF > /dev/null 2>&1
 # --- USB Boot & Power Tuning ---
-dtoverlay=disable-wifi # WLAN deativieren, da Server nicht über WLAN laufen sollten !!!
-dtoverlay=disable-bt # Bluetooth deaktivieren
+# WLAN deativieren, da Server nicht über WLAN laufen sollten !!!
+dtoverlay=disable-wifi
+# Bluetooth deaktivieren
+dtoverlay=disable-bt
+# Booten auch von USB
 program_usb_boot_mode=1
-max_usb_current=1 # mehr Power für USB-Ports
-boot_delay=15 # Startverzögerung von 15 Sekunden. 
+# mehr Power für USB-Ports
+max_usb_current=1
+# Startverzögerung von 15 Sekunden.
+boot_delay=15 
 program_usb_boot_timeout=1
 EOF
     then
