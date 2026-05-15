@@ -21,6 +21,10 @@ storagestatus &nbsp;&nbsp;&nbsp;(Displays the Memory usage of the Pi-hole Databa
 bootconfig  &nbsp;&nbsp;&nbsp;(Boot Customizations) <br>
 expandfilesystem &nbsp;&nbsp;&nbsp;(Enlarge partition if possible.) <br>
 clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
+setrouterconfig &nbsp;&nbsp;&nbsp;(Display showing which Data must be entered into the Router) <br>
+getroutermodel &nbsp;&nbsp;&nbsp;(Displays the Name of your Router) <br>
+setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole, Webmin, CUPS)
+printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers)
 <br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
