@@ -11,7 +11,7 @@ piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) 
 addblocklists &nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 addwhitedomains &nbsp;&nbsp;&nbsp;(Automatic add Allow Domains for PiHole) <br>
 setstaticip &nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
-webmininstall &nbsp;&nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management - <Optional>) <br>
+webmininstall &nbsp;&nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management - </Optional>) <br>
 autoupdate &nbsp;&nbsp;&nbsp;(Automatic System-Updates with a CronJob) <br>
 upstreamdns &nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Quad9 or Combinations - ipv4 and ipv6) <br>
 getipv4 &nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
@@ -24,7 +24,7 @@ clearpiholelogs &nbsp;&nbsp;&nbsp;(delete Pi-Hole Logs) <br>
 setrouterconfig &nbsp;&nbsp;&nbsp;(Display showing which Data must be entered into the Router) <br>
 getroutermodel &nbsp;&nbsp;&nbsp;(Displays the Name of your Router) <br>
 setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole, Webmin, CUPS)  <br>
-printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers - <Optional>)  <br>
+printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers - </Optional>)  <br>
 <br>
 -----------------------------------------------------------------------------------------------<br>
 <br>
