@@ -115,7 +115,7 @@ alias pihole-deletewhitelist='sudo sqlite3 /etc/pihole/gravity.db "delete from d
 alias pihole-stop='clear && echo && echo ***disable pihole dns-server*** && echo && sudo pihole disable && echo'
 alias pihole-start='clear && echo ***enable pihole dns-server*** && echo && sudo pihole enable && echo'
 alias ipconfig='sudo ifconfig'
-alias speicher='df -h'
+alias memory='df -h'
 alias usbpower='echo max_usb_current = 1 | sudo tee -a /boot/config.txt'
 alias btdisable='echo dtoverlay=pi3-disable-bt | sudo tee -a /boot/config.txt && sudo systemctl disable hciuart'
 alias partuuid='sudo lsblk -o name,label,partuuid'
@@ -182,7 +182,7 @@ fi
 #     DNS-Tools (Assistent)
 #
 #          Mai 2026
-# Version 2.1 von Mario Ammerschuber
+# Version 2.2 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
@@ -240,22 +240,32 @@ expandfilesystem() {
         printf "\n👉 Bitte installieren Sie es manuell mit: sudo apt install cloud-guest-utils\n"
         return 1
     fi
-    # 2. Root-Laufwerk und Partition ermitteln
-    local root_dev=$(findmnt -n -o SOURCE /)
-    local parent_dev=$(lsblk -no PKNAME "$root_dev")
-    local part_num=$(echo "$root_dev" | grep -o '[0-9]\+$')
 
-    if [ -z "$parent_dev" ]; then
+    # 2. Root-Laufwerk und Partition ermitteln (Sichere Methode für Trixie)
+    local root_dev=$(findmnt -n -o SOURCE /)
+    # parent_dev ohne /dev/ Pfad extrahieren
+    local parent_dev=$(lsblk -no PKNAME "$root_dev" | head -n 1)
+    # Partitionsnummer direkt aus dem Kernel-System (funktioniert immer)
+    local dev_node=$(basename "$root_dev")
+    local part_num=$(cat /sys/class/block/"$dev_node"/partition 2>/dev/null)
+
+    if [ -z "$parent_dev" ] || [ -z "$part_num" ]; then
         printf "⚠️ Die Laufwerksstruktur konnte nicht ermittelt werden. Expansion abgebrochen.\n"
         return 1
     fi
+
     # 3. Versuch die Partition zu vergrößern
     printf "\n💾 Expandiere Dateisystem auf maximale Größe...\n\n"
-    # growpart gibt 0 bei Erfolg und 1 bei "kein Platz" zurück
+    
+    # growpart braucht Disk (/dev/sda) und Nummer (2) getrennt
     if sudo growpart "/dev/$parent_dev" "$part_num" > /dev/null 2>&1; then
         # 4. Das Dateisystem online vergrößern
-        sudo resize2fs "$root_dev" > /dev/null 2>&1
-        printf "✅ Erfolg: Die Partition wurde auf die volle Größe erweitert.\n"
+        # Wir verzichten auf > /dev/null, damit wir Fehler sehen können
+        if sudo resize2fs "$root_dev" > /dev/null 2>&1; then
+            printf "✅ Erfolg: Die Partition wurde auf die volle Größe erweitert.\n"
+        else
+            printf "❌ Fehler: Partition vergrößert, aber Dateisystem-Resize fehlgeschlagen.\n"
+        fi
     else
         printf "ℹ️ Hinweis: Die Partition nutzt bereits den gesamten verfügbaren Speicherplatz.\n"
     fi
@@ -362,7 +372,7 @@ piholeinstall() {
     checkpartitionsize || return 1
 
     # ******************************************************
-    setstaticip // Check ob eine statische IP vorhanden ist
+    setstaticip # Check ob eine statische IP vorhanden ist
     # ******************************************************
 
     printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
@@ -446,14 +456,14 @@ piholeinstall() {
      clear # Bildschirm leeren
      echo "" | sudo pihole setpassword ""  # Setzt ein leeres Passwort, was die Abfrage deaktiviert
      printf "\n"
-     printf "#########################################################\n"
+     printf "####################################################\n"
      printf "🎉 Pi-hole Installation komplett abgeschlossen!\n"
      printf "🌐 Grafische Oberfläche aufrufen mit:\n"
      printf "👉 http://%s/admin\n" "$IPv4"
-     printf "=========================================================\n"
+     printf "====================================================\n"
      printf "🔐 Passwort: DEAKTIVIERT (kein Login nötig)\n"
-     printf "=========================================================\n"
-     printf "#########################################################\n"
+     printf "====================================================\n"
+     printf "####################################################\n"
      printf "\n\n⌨️ Weiter mit beliebiger Taste...\n\n"
      read -n 1 -s -r
      clear # Bildschirm leeren
@@ -1213,7 +1223,7 @@ setstaticip() {
         clear # Bildschirm leeren
         printf "\n\n\n--- Konfiguration der statischen IPv4-Adresse ---\n"
         printf "\nℹ️ Hinweis: Wählen Sie eine IPv4-Adresse außerhalb des DHCP-Pools.\n\n"
-        printf "\n👉 (z.Bsp. FritzBox meist: .2 bis .19 oder .201 bis .253)\n\n"
+        printf "\n👉 (z.Bsp. FritzBox meist: .2 bis .19 oder .201 bis .253)\n\n\n"
 
         local base_ip=$(echo "$current_ip" | cut -d. -f1-3)
 
@@ -1236,6 +1246,7 @@ setstaticip() {
         }
 
         while true; do
+            printf "\n\n"
             read -r -p "👉 statische IPv4-Adresse [Vorschlag: ${base_ip}.212]: " new_ip
             new_ip=${new_ip:-"${base_ip}.212"}
 
@@ -1256,6 +1267,7 @@ setstaticip() {
         local new_gw
         local def_gw="${current_gw:-${base_ip}.1}"
         while true; do
+            printf "\n\n"
             read -r -p "👉 Gateway IPv4-Adresse (Router) - [Vorschlag: $def_gw]: " new_gw
             new_gw=${new_gw:-"$def_gw"}
             # KORREKTUR: ! für "Wenn NICHT gültig", dann Fehlermeldung
@@ -1295,7 +1307,6 @@ setstaticip() {
         # ----------------------- IPv6 ----------------------------------------------
         printf "\n⌨️ Weiter mit beliebiger Taste...\n\n"
         read -n 1 -s -r
-        clear # Bildschirm leeren
         printf "\n\n🚀 Neustart in 10 Sekunden, um auf die neuen IP-Adressen umzustellen - Bitte warten...\n\n"
         sleep 10
         sudo reboot
@@ -1701,7 +1712,7 @@ EOF
 storagestatus() {
     local param="$1"
     if command -v pihole >/dev/null 2>&1; then
-        printf "\n"
+        printf "\n\n"
         printf "===========================================\n"
         printf "🗄️  Pi-hole SPEICHER-STATUS\n"
         printf "==========================================="
