@@ -31,7 +31,7 @@ alias pihole-deletewhitelist='sudo sqlite3 /etc/pihole/gravity.db "delete from d
 alias pihole-stop='clear && echo && echo ***disable pihole dns-server*** && echo && sudo pihole disable && echo'
 alias pihole-start='clear && echo ***enable pihole dns-server*** && echo && sudo pihole enable && echo'
 alias ipconfig='sudo ifconfig'
-alias speicher='df -h'
+alias memory='df -h'
 alias usbpower='echo max_usb_current = 1 | sudo tee -a /boot/config.txt'
 alias btdisable='echo dtoverlay=pi3-disable-bt | sudo tee -a /boot/config.txt && sudo systemctl disable hciuart'
 alias partuuid='sudo lsblk -o name,label,partuuid'
