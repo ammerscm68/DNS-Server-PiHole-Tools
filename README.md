@@ -5,7 +5,7 @@
 <strong>From Version 2 has been completely overhauled, including bug fixes.</strong><br>
 ****************************************************************************<br>
 <br>
-+++ Unbound as Upstream Server coming soon +++<br>
++++ Unbound as Upstream Server coming soon in Version 2.3 +++<br>
 <br>
 <strong>Individual commands:</strong>
 <br>
