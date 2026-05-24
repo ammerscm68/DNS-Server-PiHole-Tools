@@ -9,14 +9,6 @@
 <br>
 <strong>Individual commands:</strong>
 <br>
-
-```bash
-curl -sSL https://githubusercontent.com | bash
-```
-<br>
-<br>
-<br>
-<br>
 piholeinstall &nbsp;&nbsp;&nbsp;(Intercative Installation of PiHole DNS-Server) <br>
 addblocklists &nbsp;&nbsp;&nbsp;(Automatic add Blocklists for PiHole) <br>
 addwhitedomains &nbsp;&nbsp;&nbsp;(Automatic add Allow Domains for PiHole) <br>
