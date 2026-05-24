@@ -10,7 +10,9 @@
 <strong>Individual commands:</strong>
 <br>
 
-
+```bash
+curl -sSL https://githubusercontent.com | bash
+```
 <br>
 <br>
 <br>
