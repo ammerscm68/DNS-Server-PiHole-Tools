@@ -52,6 +52,8 @@ be guided interactively through the installation steps - <strong>and more</stron
 <br>
 <br><img width="622" height="372" alt="PiHole-5" src="https://github.com/user-attachments/assets/6ab5d014-b4f4-4d83-a7c8-d31ff78cde1d" />
 <br>
+
+```german language
 <br><img width="623" height="372" alt="PiHole-6" src="https://github.com/user-attachments/assets/7e8c80dd-b8a4-4be3-91c5-a9900ee174df" />
 <br>
 <br>
