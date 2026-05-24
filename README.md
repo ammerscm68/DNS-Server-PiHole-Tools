@@ -10,7 +10,7 @@
 <strong>Individual commands:</strong>
 <br>
 
-```german language
+
 <br>
 <br>
 <br>
