@@ -17,7 +17,7 @@ fi
 clear
 printf "\n\n"
 printf "========================================================\n"
-printf "🌐          DNS-Server-Tools Version 3.1\n" 
+printf "🌐          DNS-Server-Tools Version 3.2\n" 
 printf "ℹ️ (Interaktive Installation von Pi-hole und Optionen)\n"
 printf "========================================================\n"
 
