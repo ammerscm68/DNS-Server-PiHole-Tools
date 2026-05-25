@@ -1,0 +1,7 @@
+sudo curl -sSL https://raw.githubusercontent.com/pimanDE/translate2german/master/translate2german.sh | bash
+
+oder
+
+wget https://raw.githubusercontent.com/pimanDE/translate2german/master/translate2german.sh
+chmod 775 translate2german.sh
+./translate2german.sh
