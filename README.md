@@ -14,7 +14,7 @@ addwhitedomains &nbsp;&nbsp;&nbsp;(Automatic add Allow Domains for PiHole) <br>
 setstaticip &nbsp;&nbsp;&nbsp;(set static IPv4- and IPv6 Adress) - recommended <br>
 webmininstall &nbsp;&nbsp;&nbsp;(Automatic Install "Webmin" for Raspberry Pi Management - [Optional]) <br>
 autoupdate &nbsp;&nbsp;&nbsp;(Automatic System- and Blocklistupdates with a CronJob - [Optional]) <br>
-upstreamdns &nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Quad9 or Combinations - ipv4 and ipv6) <br>
+upstreamdns &nbsp;&nbsp;&nbsp;(set Upstream from Pi-Hole to Cloudflare, OpenDNS or Quad9 or Combinations and Unbound - ipv4 and ipv6) <br>
 getipv4 &nbsp;&nbsp;&nbsp;(Displays the current IPv4 Address) <br>
 getipv6 &nbsp;&nbsp;&nbsp;(Displays the current IPv6 Address) <br>
 setfail2banjail &nbsp;&nbsp;&nbsp;(set the fail2ban config - see alias) <br>
@@ -26,6 +26,8 @@ setrouterconfig &nbsp;&nbsp;&nbsp;(Display showing which Data must be entered in
 getroutermodel &nbsp;&nbsp;&nbsp;(Displays the Name of your Router) <br>
 setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole, Webmin, CUPS)  <br>
 printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers - [Optional])  <br>
+installunbound  &nbsp;&nbsp;&nbsp;(Install Unbound and activation as upstream Servers)
+setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints)
 <br>
 
 ---
