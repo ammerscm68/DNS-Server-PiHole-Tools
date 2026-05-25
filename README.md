@@ -40,5 +40,5 @@ be guided interactively through the installation steps - <strong>and more</stron
 <strong>Pi-hole then queries the following directly:</strong>
 <br>
 <br>
-<h3><strong>German: Protection against 46.336.073 "evil" Websites (as of May 25, 2026)</strong></h3> <br>
+<h3><strong>German: Protection against 46.336.073 "evil" Websites (as of May 25, 2026)</strong></h3>
 <h3><strong>English: Protection against 15.129.371 "evil" Websites (as of May 25, 2026)</strong></h3>
