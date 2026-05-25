@@ -27,7 +27,6 @@ setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints)
 
 ---
 
-<br>
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
 replace the - .bashrc - file in the user's home directory. <br>
 <br>
