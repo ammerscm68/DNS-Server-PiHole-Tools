@@ -48,7 +48,7 @@ if curl -sSL "$GITHUB_URL" -o "$TEMP_FILE"; then
 
     if [[ "$confirm" == "ja" ]]; then
         # Backup erstellen
-        BACKUP_FILE="${DEST_FILE}.bak"
+        BACKUP_FILE="${DEST_FILE}.bak_$(date +%Y%m%d_%H%M%S)"
         cp "$DEST_FILE" "$BACKUP_FILE" 2>/dev/null
         
         # Neue Datei an Zielort verschieben
