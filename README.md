@@ -21,8 +21,8 @@ setrouterconfig &nbsp;&nbsp;&nbsp;(Display showing which Data must be entered in
 getroutermodel &nbsp;&nbsp;&nbsp;(Displays the Name of your Router) <br>
 setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole, Webmin, CUPS)  <br>
 printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers - [Optional])  <br>
-installunbound  &nbsp;&nbsp;&nbsp;(Install Unbound and activation as upstream Servers)
-setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints)
+installunbound  &nbsp;&nbsp;&nbsp;(Install Unbound and activation as upstream Servers) <br>
+setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints) <br>
 <br>
 
 ---
