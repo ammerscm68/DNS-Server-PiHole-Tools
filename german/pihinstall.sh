@@ -60,7 +60,7 @@ if curl -sSL "$GITHUB_URL" -o "$TEMP_FILE"; then
         # System Neustart
         printf "\n🔄 Das System wird in 5 Sekunden neu gestartet...\n\n"
         sleep 5
-        # sudo reboot
+        sudo reboot
     else
         printf "\n⏩ Der Vorgang wurde abgebrochen. (Eingabe war: '$confirm')\n\n"
         rm -f "$TEMP_FILE"
