@@ -16,10 +16,10 @@ fi
 
 clear
 printf "\n\n"
-printf "=====================================================\n"
+printf "========================================================\n"
 printf "🌐          DNS-Server-Tools Version 3.1\n" 
 printf "ℹ️ (Interaktive Installation von Pi-hole und Optionen)\n"
-printf "=====================================================\n"
+printf "========================================================\n"
 
 # 1. Download
 printf "\n🚀 Lade Konfiguration von GitHub herunter - Bitte warten...\n\n"
@@ -55,9 +55,9 @@ if curl -sSL "$GITHUB_URL" -o "$TEMP_FILE"; then
         mv "$TEMP_FILE" "$DEST_FILE"
         
         # Ausgabe für den Benutzer, wo das Backup liegt
-        printf "\n✅ Die Datei '.bashrc' wurde erfolgreich ersetzt.\n\n"
+        printf "\n\n✅ Die Datei '.bashrc' wurde erfolgreich ersetzt.\n\n"
         printf "\n📂 Eine Sicherung der Originaldatei wurde gespeichert unter: %s\n\n" "$BACKUP_FILE"
-        
+        # System Neustart
         printf "\n🔄 Das System wird in 5 Sekunden neu gestartet...\n\n"
         sleep 5
         # sudo reboot
