@@ -27,7 +27,7 @@ setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints)
 
 ---
 
-Flash the image to a storage medium (USB stick or microSD card) and then <br>
+<strong>Flash the image to a storage medium (USB stick or microSD card) and then</strong> <br>
 ```bash
 # german language
 curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/german/pihinstall.sh | bash
