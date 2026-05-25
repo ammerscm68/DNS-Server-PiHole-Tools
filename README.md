@@ -32,12 +32,10 @@ Flash the image to a storage medium (USB stick or microSD card) and then <br>
 # german language
 curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/german/pihinstall.sh | bash
 ```
-<br>
 ```bash
 # english-us language
 curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/english-us/pihinstall.sh | bash
 ```
-<br>
 ```bash
 # english-gb language
 curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/english-gb/pihinstall.sh | bash
