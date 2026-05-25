@@ -23,7 +23,6 @@ setiptables &nbsp;&nbsp;&nbsp;(Security Settings for Installed Programs (Pi-hole
 printserverinstall &nbsp;&nbsp;&nbsp;(Installs a CUPS Print-Server with many Printer drivers - [Optional])  <br>
 installunbound  &nbsp;&nbsp;&nbsp;(Install Unbound and activation as upstream Servers) <br>
 setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints) <br>
-<br>
 
 ---
 
