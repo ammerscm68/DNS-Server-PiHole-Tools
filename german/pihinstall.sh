@@ -17,8 +17,8 @@ fi
 clear
 printf "\n\n"
 printf "=====================================================\n"
-printf "🌐       DNS-Server-Tools Version 3.1\n" 
-printf "(Interaktive Installation von Pi-hole und Optionen)\n"
+printf "🌐          DNS-Server-Tools Version 3.1\n" 
+printf "ℹ️ (Interaktive Installation von Pi-hole und Optionen)\n"
 printf "=====================================================\n"
 
 # 1. Download
@@ -33,10 +33,14 @@ if curl -sSL "$GITHUB_URL" -o "$TEMP_FILE"; then
     fi
 
     printf "\n✅ Der Download war erfolgreich.\n\n"
+
+    # Hinweis 
+    printf "\nℹ️ Hinweis: Die Startdatei '.bashrc' muss ersetzt werden"
+    printf "\nℹ️    (Eine Kopie der Originaldatei wird erstellt)\n\n\n"
     
     # 2. Abfrage zur Bestätigung
     # < /dev/tty zwingt read, auf die Tastatur zu warten
-    printf "❓ Soll die vorhandene Datei '.bashrc' wirklich ersetzt werden? (ja/nein): "
+    printf "❓ Soll die vorhandene Datei '.bashrc' jetzt ersetzt werden? (ja/nein): "
     read -r confirm < /dev/tty
     
     # In Kleinbuchstaben umwandeln und Zeilenumbrüche entfernen
