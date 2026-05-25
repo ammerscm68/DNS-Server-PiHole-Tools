@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # --- KONFIGURATION ---
-GITHUB_URL="https://githubusercontent.com"
+GITHUB_URL="https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/german/.bashrc"
 DEST_FILE="$HOME/.bashrc"
 TEMP_FILE="/tmp/.bashrc_new"
 
@@ -17,7 +17,9 @@ printf "==================================================\n"
 printf "🌐 .bashrc Update-Service (DNS-Server Tools)\n"
 printf "==================================================\n"
 printf "\n\n⌨️ Weiter mit beliebiger Taste (Abbruch mit Strg+C)...\n\n"
-read -n 1 -s -r
+
+# KORREKTUR: Explizit vom Terminal lesen
+read -n 1 -s -r < /dev/tty
 
 # 1. Download
 printf "\n🚀 Lade neue Konfiguration von GitHub herunter...\n"
@@ -31,16 +33,12 @@ if curl -sSL "$GITHUB_URL" -o "$TEMP_FILE"; then
 
     printf "✅ Download erfolgreich.\n\n"
     
-    # --- WICHTIG: Tastaturpuffer leeren ---
-    # Dies verhindert, dass der Tastendruck von oben die Abfrage überspringt
-    while read -r -t 0; do read -r; done
-    
     # 2. Abfrage zur Bestätigung
-    # Wir nutzen "read -r", um Backslashes sauber zu behandeln
-    read -p "❓ Soll die vorhandene .bashrc wirklich ersetzt werden? (ja/nein): " confirm
+    # KORREKTUR: < /dev/tty zwingt read, auf die Tastatur zu warten
+    printf "❓ Soll die vorhandene .bashrc wirklich ersetzt werden? (ja/nein): "
+    read -r confirm < /dev/tty
     
-    # Sicherstellen, dass die Eingabe klein geschrieben ist
-    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+    confirm=$(echo "$confirm" | tr '[:upper:]' '[:lower:]' | tr -d '\r')
 
     if [[ "$confirm" == "ja" || "$confirm" == "j" ]]; then
         cp "$DEST_FILE" "${DEST_FILE}.bak" 2>/dev/null
