@@ -28,7 +28,20 @@ setunboundcronjob &nbsp;&nbsp;&nbsp;(set Cronjob for update Root-Hints)
 ---
 
 Flash the image to a storage medium (USB stick or microSD card) and then <br>
-replace the - .bashrc - file in the user's home directory. <br>
+```bash
+# german language
+curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/german/pihinstall.sh | bash
+```
+<br>
+```bash
+# english-us language
+curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/english-us/pihinstall.sh | bash
+```
+<br>
+```bash
+# english-gb language
+curl -sSL https://raw.githubusercontent.com/ammerscm68/DNS-Server-PiHole-Tools/main/english-gb/pihinstall.sh | bash
+```
 <br>
 The installation process will start the next time you <strong>restart and login</strong>, and you will <br>
 be guided interactively through the installation steps - <strong>and more</strong>. <br>
