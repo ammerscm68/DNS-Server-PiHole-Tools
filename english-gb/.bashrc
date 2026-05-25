@@ -181,7 +181,7 @@ fi
 #     DNS-Tools (Assistent)
 #             (GB)
 #           May 2026
-# Version 3.1 von Mario Ammerschuber
+# Version 3.2 von Mario Ammerschuber
 # -----------------------------------
 
 checksudo() {
@@ -362,7 +362,7 @@ piholeinstall() {
     # Check if "sudo" is installed
     checksudo || return 1
 
-    printf "\n\n⚙️ DNS-Server Tools Version 3.0\n"
+    printf "\n\n⚙️ DNS-Server Tools Version 3.2\n"
     storagestatus -phc # Show Pi-hole storage status if installed
 
     # Pre-check: Is Pi-hole already installed?
