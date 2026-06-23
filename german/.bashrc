@@ -1872,6 +1872,7 @@ sudo apt-get --assume-yes autoremove >> "$syslog_path" 2>&1
 sudo apt-get autoclean >> "$syslog_path" 2>&1
 sudo pihole -up >> "$syslog_path" 2>&1
 sudo pihole enable >> "$syslog_path" 2>&1
+# sudo curl -sSL https://raw.githubusercontent.com/pimanDE/translate2german/master/translate2german.sh | bash >> "$syslog_path" 2>&1
 echo "***Neustart nach Systemupdate***" >> "$syslog_path" 2>&1
 sudo reboot >> "$syslog_path" 2>&1
 EOF
